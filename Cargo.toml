@@ -1,0 +1,46 @@
+[workspace]
+members = [
+    "crates/core",
+    "crates/bricks",
+    "crates/scheduler",
+    "crates/meter",
+    "crates/db",
+    "crates/auth",
+    "services/api",
+    "services/worker",
+    "services/ui_builder",
+    "services/tui",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["FlowMason Team"]
+license = "MIT"
+
+[workspace.dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+async-trait = "0.1"
+tokio = { version = "1.0", features = ["full"] }
+anyhow = "1.0"
+thiserror = "1.0"
+axum = { version = "0.7", features = ["macros", "json"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors"] }
+chrono = { version = "0.4", features = ["serde"] }
+reqwest = { version = "0.11", features = ["json"] }
+tokio-cron-scheduler = "0.9"
+sqlx = { version = "0.7", features = ["runtime-tokio-native-tls", "postgres", "chrono"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+schemars = { version = "1.0", features = ["derive"] }
+validator = { version = "0.18", features = ["derive"] }
+ratatui = "0.26"
+crossterm = "0.28"
+mdbook = "0.4"
+
+[profile.release]
+opt-level = 3
+lto = true
+

@@ -1,0 +1,12 @@
+[package]
+name = "flowmason-ui-builder"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+flowmason-core = { path = "../../crates/core" }
+flowmason-bricks = { path = "../../crates/bricks" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+schemars = { workspace = true }
+

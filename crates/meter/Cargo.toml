@@ -1,0 +1,17 @@
+[package]
+name = "flowmason-meter"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+flowmason-core = { path = "../core" }
+flowmason-db = { path = "../db" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+sqlx = { workspace = true }
+uuid = { workspace = true }
+tokio = { workspace = true }
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+

@@ -1,0 +1,21 @@
+[package]
+name = "flowmason-tui"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "flowmason-tui"
+path = "src/main.rs"
+
+[dependencies]
+flowmason-core = { path = "../../crates/core" }
+flowmason-bricks = { path = "../../crates/bricks" }
+flowmason-api = { path = "../api" }
+ratatui = { workspace = true }
+crossterm = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+reqwest = { workspace = true }
+anyhow = { workspace = true }
+

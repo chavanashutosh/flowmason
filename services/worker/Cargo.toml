@@ -1,0 +1,13 @@
+[package]
+name = "flowmason-worker"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+flowmason-core = { path = "../../crates/core" }
+flowmason-bricks = { path = "../../crates/bricks" }
+flowmason-meter = { path = "../../crates/meter" }
+tokio = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+

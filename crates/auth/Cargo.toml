@@ -1,0 +1,19 @@
+[package]
+name = "flowmason-auth"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+jsonwebtoken = "9.2"
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+axum = { workspace = true }
+tokio = { workspace = true }
+async-trait = { workspace = true }
+sha2 = "0.10"
+hex = "0.4"
+

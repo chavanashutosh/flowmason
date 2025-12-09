@@ -1,0 +1,25 @@
+[package]
+name = "flowmason-api"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+flowmason-core = { path = "../../crates/core" }
+flowmason-bricks = { path = "../../crates/bricks" }
+flowmason-meter = { path = "../../crates/meter" }
+flowmason-scheduler = { path = "../../crates/scheduler" }
+flowmason-db = { path = "../../crates/db" }
+flowmason-auth = { path = "../../crates/auth" }
+axum = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+tower-governor = { version = "0.2", package = "tower_governor" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+bcrypt = "0.15"
+

@@ -1,0 +1,15 @@
+[package]
+name = "flowmason-db"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+flowmason-core = { path = "../core" }
+sqlx = { workspace = true, features = ["runtime-tokio-native-tls", "sqlite", "chrono", "uuid"] }
+tokio = { workspace = true }
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+
