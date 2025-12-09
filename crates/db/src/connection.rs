@@ -125,6 +125,21 @@ async fn init_schema(pool: &SqlitePool) -> Result<()> {
     .execute(pool)
     .await?;
 
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS scheduled_flows (
+            id TEXT PRIMARY KEY,
+            flow_id TEXT NOT NULL UNIQUE,
+            cron_expression TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (flow_id) REFERENCES flows(id)
+        )
+        "#
+    )
+    .execute(pool)
+    .await?;
+
     Ok(())
 }
 

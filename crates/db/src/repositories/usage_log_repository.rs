@@ -127,8 +127,8 @@ impl UsageLogRepository {
     pub async fn get_daily_usage_count(&self, brick_type: &BrickType) -> Result<u64> {
         let brick_name = format!("{:?}", brick_type).to_lowercase();
         let today = Utc::now().date_naive();
-        let today_start = today.and_hms_opt(0, 0, 0).unwrap();
-        let today_end = today.and_hms_opt(23, 59, 59).unwrap();
+        let today_start = Utc::from_utc_datetime(&Utc, &today.and_hms_opt(0, 0, 0).unwrap());
+        let today_end = Utc::from_utc_datetime(&Utc, &today.and_hms_opt(23, 59, 59).unwrap());
 
         let count = sqlx::query!(
             r#"
@@ -146,6 +146,45 @@ impl UsageLogRepository {
         .await?;
 
         Ok(count.count as u64)
+    }
+
+    /// Get daily usage count for a brick by name (for custom bricks)
+    pub async fn get_daily_usage_count_by_name(&self, brick_name: &str) -> Result<u64> {
+        let today = Utc::now().date_naive();
+        let today_start = Utc::from_utc_datetime(&Utc, &today.and_hms_opt(0, 0, 0).unwrap());
+        let today_end = Utc::from_utc_datetime(&Utc, &today.and_hms_opt(23, 59, 59).unwrap());
+
+        let count = sqlx::query!(
+            r#"
+            SELECT COUNT(*) as count
+            FROM usage_logs
+            WHERE brick_name = ?1
+            AND timestamp >= ?2
+            AND timestamp <= ?3
+            "#,
+            brick_name,
+            today_start,
+            today_end
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(count.count as u64)
+    }
+
+    /// Get all unique brick names from usage_logs table
+    pub async fn get_unique_brick_names(&self) -> Result<Vec<String>> {
+        let rows = sqlx::query!(
+            r#"
+            SELECT DISTINCT brick_name
+            FROM usage_logs
+            ORDER BY brick_name
+            "#
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows.into_iter().map(|row| row.brick_name).collect())
     }
 }
 

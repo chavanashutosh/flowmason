@@ -11,7 +11,7 @@ use flowmason_core::quota::{QuotaManager, DatabaseQuotaManager};
 use flowmason_core::UsageLogger;
 use flowmason_meter::DatabaseUsageLogger;
 use flowmason_scheduler::CronExecutor;
-use flowmason_db::repositories::{FlowRepository, ExecutionRepository, UsageLogRepository, UserRepository, ApiKeyRepository};
+use flowmason_db::repositories::{FlowRepository, ExecutionRepository, UsageLogRepository, UserRepository, ApiKeyRepository, ScheduledFlowRepository};
 use flowmason_auth::auth_middleware;
 use sqlx::SqlitePool;
 
@@ -36,6 +36,7 @@ pub struct SchedulerState {
     pub quota_manager: Arc<dyn QuotaManager>,
     pub usage_logger: Arc<dyn UsageLogger>,
     pub cron_executor: Arc<CronExecutor>,
+    pub scheduled_flow_repo: ScheduledFlowRepository,
 }
 
 #[derive(Clone)]
@@ -50,17 +51,93 @@ pub fn create_router(pool: SqlitePool) -> Router {
     let usage_repo = UsageLogRepository::new(pool.clone());
     let user_repo = UserRepository::new(pool.clone());
     let api_key_repo = ApiKeyRepository::new(pool.clone());
+    let scheduled_flow_repo = ScheduledFlowRepository::new(pool.clone());
     let quota_manager: Arc<dyn QuotaManager> = Arc::new(DatabaseQuotaManager::new(pool.clone()));
     let usage_logger: Arc<dyn UsageLogger> = Arc::new(DatabaseUsageLogger::new(usage_repo.clone()));
+    
+    // Create cron executor with repositories
     let cron_executor = Arc::new(
-        CronExecutor::new().expect("Failed to create CronExecutor")
+        CronExecutor::with_repositories(
+            Arc::new(scheduled_flow_repo.clone()),
+            Arc::new(flow_repo.clone()),
+        ).expect("Failed to create CronExecutor")
     );
     
-    // Start the scheduler
+    // Start the scheduler and load scheduled flows
     let executor_clone = cron_executor.clone();
+    let flow_repo_clone = flow_repo.clone();
+    let execution_repo_clone = execution_repo.clone();
+    let quota_manager_clone = quota_manager.clone();
+    let usage_logger_clone = usage_logger.clone();
+    
     tokio::spawn(async move {
+        // Start the scheduler
         if let Err(e) = executor_clone.start().await {
             eprintln!("Failed to start scheduler: {}", e);
+            return;
+        }
+        
+        // Load scheduled flows from database
+        if let Err(e) = executor_clone.load_scheduled_flows(|flow| {
+            let flow_repo = flow_repo_clone.clone();
+            let execution_repo = execution_repo_clone.clone();
+            let quota_manager = quota_manager_clone.clone();
+            let usage_logger = usage_logger_clone.clone();
+            
+            Arc::new(move |flow: flowmason_core::types::Flow, initial_payload: serde_json::Value| {
+                let flow_repo = flow_repo.clone();
+                let execution_repo = execution_repo.clone();
+                let quota_manager = quota_manager.clone();
+                let usage_logger = usage_logger.clone();
+                
+                Box::pin(async move {
+                    use flowmason_bricks::*;
+                    use flowmason_core::{FlowRunner, FlowRunnerContext};
+                    
+                    // Create brick instances
+                    let mut bricks: Vec<Box<dyn flowmason_core::Brick>> = Vec::new();
+                    
+                    for brick_config in &flow.bricks {
+                        let brick: Box<dyn flowmason_core::Brick> = match brick_config.brick_type {
+                            flowmason_core::types::BrickType::OpenAi => Box::new(OpenAiBrick),
+                            flowmason_core::types::BrickType::Nvidia => Box::new(NvidiaBrick),
+                            flowmason_core::types::BrickType::HubSpot => Box::new(HubSpotBrick),
+                            flowmason_core::types::BrickType::Notion => Box::new(NotionBrick),
+                            flowmason_core::types::BrickType::Odoo => Box::new(OdooBrick),
+                            flowmason_core::types::BrickType::N8n => Box::new(N8nBrick),
+                            flowmason_core::types::BrickType::FieldMapping => Box::new(FieldMappingBrick),
+                            flowmason_core::types::BrickType::CombineText => Box::new(CombineTextBrick),
+                            flowmason_core::types::BrickType::Conditional => Box::new(ConditionalBrick),
+                        };
+                        bricks.push(brick);
+                    }
+                    
+                    // Create execution context
+                    let context = FlowRunnerContext {
+                        quota_manager: Some(quota_manager),
+                        usage_logger: Some(usage_logger),
+                        flow_id: flow.id.clone(),
+                        execution_id: uuid::Uuid::new_v4().to_string(),
+                    };
+                    
+                    // Execute flow
+                    let execution = FlowRunner::execute_flow_with_tracking(
+                        &flow,
+                        bricks,
+                        initial_payload,
+                        Some(context),
+                    )
+                    .await
+                    .map_err(|e| anyhow::anyhow!("Flow execution error: {}", e))?;
+                    
+                    // Store execution in history
+                    execution_repo.create(&execution).await?;
+                    
+                    Ok(execution)
+                })
+            })
+        }).await {
+            eprintln!("Failed to load scheduled flows: {}", e);
         }
     });
     
@@ -78,6 +155,7 @@ pub fn create_router(pool: SqlitePool) -> Router {
         quota_manager,
         usage_logger,
         cron_executor,
+        scheduled_flow_repo,
     };
 
     let auth_state = AuthState {

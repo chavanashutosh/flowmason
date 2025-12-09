@@ -6,6 +6,7 @@ use tokio_cron_scheduler::{Job, JobScheduler};
 use uuid::Uuid;
 
 use flowmason_core::types::{Flow, FlowExecution};
+use flowmason_db::repositories::{ScheduledFlowRepository, FlowRepository};
 
 pub type FlowExecutor = Arc<dyn Fn(Flow, Value) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<FlowExecution>> + Send>> + Send + Sync>;
 
@@ -13,6 +14,8 @@ pub struct CronExecutor {
     scheduler: Arc<RwLock<JobScheduler>>,
     flow_executors: Arc<RwLock<std::collections::HashMap<String, FlowExecutor>>>,
     job_ids: Arc<RwLock<std::collections::HashMap<String, Uuid>>>,
+    scheduled_flow_repo: Option<Arc<ScheduledFlowRepository>>,
+    flow_repo: Option<Arc<FlowRepository>>,
 }
 
 impl CronExecutor {
@@ -22,6 +25,22 @@ impl CronExecutor {
             scheduler: Arc::new(RwLock::new(scheduler)),
             flow_executors: Arc::new(RwLock::new(std::collections::HashMap::new())),
             job_ids: Arc::new(RwLock::new(std::collections::HashMap::new())),
+            scheduled_flow_repo: None,
+            flow_repo: None,
+        })
+    }
+
+    pub fn with_repositories(
+        scheduled_flow_repo: Arc<ScheduledFlowRepository>,
+        flow_repo: Arc<FlowRepository>,
+    ) -> Result<Self> {
+        let scheduler = JobScheduler::new()?;
+        Ok(Self {
+            scheduler: Arc::new(RwLock::new(scheduler)),
+            flow_executors: Arc::new(RwLock::new(std::collections::HashMap::new())),
+            job_ids: Arc::new(RwLock::new(std::collections::HashMap::new())),
+            scheduled_flow_repo: Some(scheduled_flow_repo),
+            flow_repo: Some(flow_repo),
         })
     }
 
@@ -34,7 +53,19 @@ impl CronExecutor {
     ) -> Result<String> {
         let flow_id = flow.id.clone();
         let executor_clone = executor.clone();
-        let flow_clone = flow.clone();
+        
+        // Persist to database if repository is available
+        if let Some(ref repo) = self.scheduled_flow_repo {
+            // Check if already exists, update only if cron expression changed
+            if let Some(existing) = repo.get_by_flow_id(&flow_id).await? {
+                // Only update if the cron expression actually changed
+                if existing.cron_expression != cron_expr {
+                    repo.update(&flow_id, cron_expr).await?;
+                }
+            } else {
+                repo.create(&flow_id, cron_expr).await?;
+            }
+        }
         
         // Store the executor
         self.flow_executors.write().await.insert(flow_id.clone(), executor);
@@ -46,14 +77,42 @@ impl CronExecutor {
         // Store job ID mapping
         self.job_ids.write().await.insert(flow_id.clone(), job_uuid);
 
+        // Capture flow_id and flow_repo for fetching fresh flow on each execution
+        let flow_id_for_job = flow_id.clone();
+        let flow_repo_for_job = self.flow_repo.clone();
+
         let job = Job::new_async(cron_expr, move |_uuid, _l| {
-            let flow = flow_clone.clone();
+            let flow_id = flow_id_for_job.clone();
             let executor = executor_clone.clone();
+            let flow_repo = flow_repo_for_job.clone();
             Box::pin(async move {
                 let initial_payload = json!({});
+                
+                // Fetch the flow fresh from the database on each execution
+                // This ensures we always use the latest flow definition
+                let flow = match flow_repo.as_ref() {
+                    Some(repo) => {
+                        match repo.get(&flow_id).await {
+                            Ok(Some(flow)) => flow,
+                            Ok(None) => {
+                                eprintln!("Scheduled flow {} not found in database", flow_id);
+                                return Err(anyhow::anyhow!("Flow {} not found", flow_id));
+                            }
+                            Err(e) => {
+                                eprintln!("Error fetching flow {} from database: {}", flow_id, e);
+                                return Err(anyhow::anyhow!("Failed to fetch flow: {}", e));
+                            }
+                        }
+                    }
+                    None => {
+                        eprintln!("Flow repository not available for scheduled flow {}", flow_id);
+                        return Err(anyhow::anyhow!("Flow repository not available"));
+                    }
+                };
+                
                 println!("Executing scheduled flow {} at {}", flow.id, chrono::Utc::now());
                 
-                // Actually execute the flow
+                // Actually execute the flow with the fresh definition
                 match executor(flow.clone(), initial_payload).await {
                     Ok(execution) => {
                         println!("Flow {} executed successfully. Execution ID: {}", flow.id, execution.execution_id);
@@ -87,6 +146,11 @@ impl CronExecutor {
 
     /// Removes a scheduled flow
     pub async fn unschedule_flow(&self, flow_id: &str) -> Result<()> {
+        // Remove from database if repository is available
+        if let Some(ref repo) = self.scheduled_flow_repo {
+            repo.delete(flow_id).await?;
+        }
+        
         // Remove executor
         self.flow_executors.write().await.remove(flow_id);
         
@@ -102,6 +166,41 @@ impl CronExecutor {
     /// Gets list of scheduled flow IDs
     pub async fn get_scheduled_flows(&self) -> Vec<String> {
         self.flow_executors.read().await.keys().cloned().collect()
+    }
+
+    /// Gets list of scheduled flows with cron expressions from database
+    pub async fn get_scheduled_flows_with_cron(&self) -> Result<Vec<(String, String)>> {
+        if let Some(ref repo) = self.scheduled_flow_repo {
+            let flows = repo.list_all().await?;
+            Ok(flows.into_iter().map(|f| (f.flow_id, f.cron_expression)).collect())
+        } else {
+            // Fallback to in-memory storage
+            Ok(self.flow_executors.read().await.keys().map(|k| (k.clone(), String::new())).collect())
+        }
+    }
+
+    /// Loads scheduled flows from database and registers them with executors
+    /// This should be called on startup with a function that creates executors
+    pub async fn load_scheduled_flows<F>(&self, create_executor: F) -> Result<()>
+    where
+        F: Fn(&Flow) -> FlowExecutor,
+    {
+        if let (Some(ref repo), Some(ref flow_repo)) = (self.scheduled_flow_repo, self.flow_repo) {
+            let scheduled_flows = repo.list_all().await?;
+            
+            for scheduled_flow in scheduled_flows {
+                // Get the flow from repository
+                if let Some(flow) = flow_repo.get(&scheduled_flow.flow_id).await? {
+                    // Create executor for this flow
+                    let executor = create_executor(&flow);
+                    
+                    // Schedule the flow (this will add it to the scheduler)
+                    self.schedule_flow(flow, &scheduled_flow.cron_expression, executor).await?;
+                }
+            }
+        }
+        
+        Ok(())
     }
 }
 

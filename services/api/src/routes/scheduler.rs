@@ -102,14 +102,15 @@ async fn schedule_flow(
 async fn list_scheduled_flows(
     axum::extract::State(state): axum::extract::State<SchedulerState>,
 ) -> Result<Json<ScheduledFlowsResponse>, StatusCode> {
-    let flow_ids = state.cron_executor.get_scheduled_flows().await;
+    // Get scheduled flows with cron expressions from database
+    let scheduled_flows_with_cron = state.cron_executor.get_scheduled_flows_with_cron().await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     
-    // We currently store only flow IDs; cron expressions are managed inside the scheduler
-    let scheduled_flows: Vec<_> = flow_ids
+    let scheduled_flows: Vec<_> = scheduled_flows_with_cron
         .into_iter()
-        .map(|flow_id| crate::dto::ScheduledFlowResponse {
+        .map(|(flow_id, cron_expression)| crate::dto::ScheduledFlowResponse {
             flow_id,
-            cron_expression: "".to_string(), // Placeholder
+            cron_expression,
         })
         .collect();
 

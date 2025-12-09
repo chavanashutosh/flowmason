@@ -28,12 +28,53 @@ impl From<CoreUsageLog> for UsageLogResponse {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum BrickIdentifier {
+    Type(BrickType),
+    Custom(String),
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UsageStatsResponse {
-    pub brick_type: BrickType,
+    pub brick_type: String,
     pub daily_usage: u64,
     pub daily_limit: u64,
     pub monthly_usage: Option<u64>,
     pub monthly_limit: Option<u64>,
+}
+
+impl UsageStatsResponse {
+    pub fn from_brick_type(brick_type: BrickType, daily_usage: u64, daily_limit: u64, monthly_usage: Option<u64>, monthly_limit: Option<u64>) -> Self {
+        // Convert enum to snake_case string
+        let brick_type_str = match brick_type {
+            BrickType::OpenAi => "openai",
+            BrickType::Nvidia => "nvidia",
+            BrickType::HubSpot => "hubspot",
+            BrickType::Notion => "notion",
+            BrickType::Odoo => "odoo",
+            BrickType::N8n => "n8n",
+            BrickType::FieldMapping => "field_mapping",
+            BrickType::CombineText => "combine_text",
+            BrickType::Conditional => "conditional",
+        }.to_string();
+        
+        Self {
+            brick_type: brick_type_str,
+            daily_usage,
+            daily_limit,
+            monthly_usage,
+            monthly_limit,
+        }
+    }
+
+    pub fn from_custom_brick(brick_name: String, daily_usage: u64, daily_limit: u64, monthly_usage: Option<u64>, monthly_limit: Option<u64>) -> Self {
+        Self {
+            brick_type: brick_name,
+            daily_usage,
+            daily_limit,
+            monthly_usage,
+            monthly_limit,
+        }
+    }
 }
 
