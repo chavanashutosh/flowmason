@@ -1,0 +1,114 @@
+{
+  "name": "Field Mapping Connection Examples",
+  "description": "Examples of how to connect data between bricks using field mapping",
+  "examples": [
+    {
+      "name": "Simple Field Mapping",
+      "description": "Map fields from one structure to another",
+      "brick_type": "field_mapping",
+      "config": {
+        "mappings": [
+          {
+            "source_path": "user.name",
+            "target_path": "customer_name"
+          },
+          {
+            "source_path": "user.email",
+            "target_path": "customer_email"
+          },
+          {
+            "source_path": "user.phone",
+            "target_path": "contact_phone"
+          }
+        ]
+      },
+      "input_example": {
+        "user": {
+          "name": "John Doe",
+          "email": "john@example.com",
+          "phone": "+1234567890"
+        }
+      },
+      "output_example": {
+        "customer_name": "John Doe",
+        "customer_email": "john@example.com",
+        "contact_phone": "+1234567890"
+      }
+    },
+    {
+      "name": "Nested Field Mapping",
+      "description": "Map nested fields to flat structure",
+      "brick_type": "field_mapping",
+      "config": {
+        "mappings": [
+          {
+            "source_path": "form.deal.name",
+            "target_path": "properties.dealname"
+          },
+          {
+            "source_path": "form.deal.amount",
+            "target_path": "properties.amount"
+          },
+          {
+            "source_path": "form.contact.email",
+            "target_path": "properties.email"
+          }
+        ]
+      },
+      "input_example": {
+        "form": {
+          "deal": {
+            "name": "Q1 Deal",
+            "amount": "50000"
+          },
+          "contact": {
+            "email": "contact@example.com"
+          }
+        }
+      },
+      "output_example": {
+        "properties": {
+          "dealname": "Q1 Deal",
+          "amount": "50000",
+          "email": "contact@example.com"
+        }
+      }
+    },
+    {
+      "name": "HubSpot Deal Mapping",
+      "description": "Map form data to HubSpot deal format",
+      "brick_type": "field_mapping",
+      "config": {
+        "mappings": [
+          {
+            "source_path": "form.deal_name",
+            "target_path": "properties.dealname"
+          },
+          {
+            "source_path": "form.amount",
+            "target_path": "properties.amount"
+          },
+          {
+            "source_path": "form.stage",
+            "target_path": "properties.dealstage"
+          }
+        ]
+      },
+      "input_example": {
+        "form": {
+          "deal_name": "Enterprise Deal",
+          "amount": "100000",
+          "stage": "qualifiedtobuy"
+        }
+      },
+      "output_example": {
+        "properties": {
+          "dealname": "Enterprise Deal",
+          "amount": "100000",
+          "dealstage": "qualifiedtobuy"
+        }
+      }
+    }
+  ]
+}
+

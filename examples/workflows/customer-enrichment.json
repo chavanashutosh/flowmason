@@ -1,0 +1,83 @@
+{
+  "name": "Customer Data Enrichment",
+  "description": "Enrich customer data with AI and sync to CRM",
+  "flow": {
+    "name": "Customer Data Enrichment",
+    "description": "Process customer data, enrich with AI, and create CRM records",
+    "bricks": [
+      {
+        "brick_type": "field_mapping",
+        "config": {
+          "mappings": [
+            {
+              "source_path": "form.first_name",
+              "target_path": "first_name"
+            },
+            {
+              "source_path": "form.last_name",
+              "target_path": "last_name"
+            },
+            {
+              "source_path": "form.email",
+              "target_path": "email"
+            }
+          ]
+        }
+      },
+      {
+        "brick_type": "combine_text",
+        "config": {
+          "fields": ["first_name", "last_name"],
+          "separator": " ",
+          "output_field": "full_name"
+        }
+      },
+      {
+        "brick_type": "openai",
+        "config": {
+          "api_key": "your-openai-api-key",
+          "model_name": "gpt-3.5-turbo",
+          "prompt_template": "Generate a professional company description for: {{full_name}} working in {{industry}}",
+          "temperature": 0.7,
+          "max_tokens": 200
+        }
+      },
+      {
+        "brick_type": "field_mapping",
+        "config": {
+          "mappings": [
+            {
+              "source_path": "full_name",
+              "target_path": "properties.firstname"
+            },
+            {
+              "source_path": "email",
+              "target_path": "properties.email"
+            },
+            {
+              "source_path": "content",
+              "target_path": "properties.company_description"
+            }
+          ]
+        }
+      },
+      {
+        "brick_type": "hubspot",
+        "config": {
+          "api_key": "your-hubspot-api-key",
+          "operation": "create_deal"
+        }
+      }
+    ]
+  },
+  "use_case": "Enrich customer form submissions with AI-generated descriptions and create HubSpot deals",
+  "input_example": {
+    "form": {
+      "first_name": "John",
+      "last_name": "Doe",
+      "email": "john@example.com",
+      "industry": "Technology"
+    }
+  }
+}
+

@@ -1,0 +1,47 @@
+{
+  "name": "HubSpot to Notion Sync",
+  "description": "Sync HubSpot deals to Notion database",
+  "flow": {
+    "name": "HubSpot to Notion Sync",
+    "description": "Automatically sync HubSpot deals to a Notion database",
+    "bricks": [
+      {
+        "brick_type": "hubspot",
+        "config": {
+          "api_key": "your-hubspot-api-key",
+          "operation": "get_deals"
+        }
+      },
+      {
+        "brick_type": "field_mapping",
+        "config": {
+          "mappings": [
+            {
+              "source_path": "results[].properties.dealname",
+              "target_path": "title"
+            },
+            {
+              "source_path": "results[].properties.amount",
+              "target_path": "amount"
+            },
+            {
+              "source_path": "results[].properties.dealstage",
+              "target_path": "status"
+            }
+          ]
+        }
+      },
+      {
+        "brick_type": "notion",
+        "config": {
+          "api_key": "your-notion-api-key",
+          "database_id": "your-database-id",
+          "operation": "create_page"
+        }
+      }
+    ]
+  },
+  "use_case": "Automatically create Notion pages for new HubSpot deals",
+  "input_example": {}
+}
+

@@ -1,0 +1,47 @@
+{
+  "name": "NVIDIA Integration Examples",
+  "description": "Examples of NVIDIA AI services integration configurations",
+  "examples": [
+    {
+      "name": "Automatic Speech Recognition (ASR)",
+      "description": "Convert speech to text using NVIDIA ASR",
+      "brick_type": "nvidia",
+      "config": {
+        "api_key": "your-nvidia-api-key",
+        "service": "asr",
+        "model": "nvidia/nemospeechtotext"
+      },
+      "input_example": {
+        "audio_url": "https://example.com/audio.mp3"
+      }
+    },
+    {
+      "name": "Optical Character Recognition (OCR)",
+      "description": "Extract text from images using NVIDIA OCR",
+      "brick_type": "nvidia",
+      "config": {
+        "api_key": "your-nvidia-api-key",
+        "service": "ocr",
+        "model": "nvidia/nv-ocr"
+      },
+      "input_example": {
+        "image_url": "https://example.com/document.png"
+      }
+    },
+    {
+      "name": "Text Generation",
+      "description": "Generate text using NVIDIA language models",
+      "brick_type": "nvidia",
+      "config": {
+        "api_key": "your-nvidia-api-key",
+        "service": "text_generation",
+        "model": "nvidia/nv-llama",
+        "prompt_template": "Complete the following: {{text}}"
+      },
+      "input_example": {
+        "text": "The future of AI is"
+      }
+    }
+  ]
+}
+

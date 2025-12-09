@@ -1,0 +1,51 @@
+{
+  "name": "AI Content Generation to Notion",
+  "description": "Generate content with AI and save to Notion",
+  "flow": {
+    "name": "AI Content to Notion",
+    "description": "Generate blog post content using AI and create Notion pages",
+    "bricks": [
+      {
+        "brick_type": "openai",
+        "config": {
+          "api_key": "your-openai-api-key",
+          "model_name": "gpt-4",
+          "prompt_template": "Write a blog post about {{topic}} with the following requirements:\n- Length: {{length}} words\n- Tone: {{tone}}\n- Include: {{requirements}}",
+          "temperature": 0.8,
+          "max_tokens": 2000
+        }
+      },
+      {
+        "brick_type": "field_mapping",
+        "config": {
+          "mappings": [
+            {
+              "source_path": "topic",
+              "target_path": "title"
+            },
+            {
+              "source_path": "content",
+              "target_path": "content"
+            }
+          ]
+        }
+      },
+      {
+        "brick_type": "notion",
+        "config": {
+          "api_key": "your-notion-api-key",
+          "database_id": "your-database-id",
+          "operation": "create_page"
+        }
+      }
+    ]
+  },
+  "use_case": "Automatically generate blog content and save to Notion for review",
+  "input_example": {
+    "topic": "The Future of AI in Business",
+    "length": "1000",
+    "tone": "professional",
+    "requirements": "real-world examples and actionable insights"
+  }
+}
+

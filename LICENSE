@@ -1,0 +1,186 @@
+Version 2.0 — 2025
+
+Copyright © 2025 FlowMason
+
+Developed and maintained by: Ashutosh Ramrao Chavan (https://github.com/chavanashutosh)
+
+Made with love in Vienna
+
+This project is open to contributors. Contributions are welcome through Pull Requests.
+
+All rights reserved.
+
+1. PURPOSE OF THIS LICENSE
+
+This software is provided for personal, private, local execution only.
+
+Commercial usage, public hosting, redistribution, or resale is not permitted without written approval and a commercial license.
+
+2. FREE USAGE CONDITIONS
+
+You may use the software free of charge only if ALL below are true:
+
+- It runs locally on a personal device
+- It is accessed only by you (single user)
+- It does NOT run on a public domain or external network
+- You are not charging money for its usage
+- You are not providing workflows to business clients
+- It is not deployed inside a business or institutional infrastructure
+- It is not used to automate tasks for others
+
+Examples allowed:
+
+- http://localhost:3000
+- http://127.0.0.1:PORT
+- Private device usage
+
+Examples NOT allowed without paid license:
+
+- domain.com
+- dev.company.local
+- Internal company server
+- Shared VPS
+- Shared office installation
+
+3. HOSTED OR PUBLIC DEPLOYMENT REQUIREMENTS
+
+If deployed outside localhost:
+
+A clear attribution MUST appear visibly:
+
+Built using FlowMason — https://github.com/chavanashutosh/flowmason
+
+This attribution must be:
+
+- readable
+- included in UI footer or about page
+- not hidden or minimized
+
+Additionally:
+
+- branding and original name cannot be removed or replaced
+- "FlowMason" must remain visible
+
+4. COMMERCIAL RESTRICTIONS
+
+Without a commercial license you may NOT:
+
+- sell access to FlowMason
+- run it as SaaS for customers
+- include it inside paid systems
+- charge clients for workflows executed using FlowMason
+- deploy in corporate environments
+- deliver automation services that rely on it
+- monetize integrations developed inside FlowMason
+
+Commercial use requires direct agreement with the licensor.
+
+5. MODIFICATIONS AND CONTRIBUTIONS
+
+This project is open to contributors. Contributions are welcome through Pull Requests to the original repository at https://github.com/chavanashutosh/flowmason.
+
+You may modify the software under these conditions:
+
+- modifications remain private
+- you must submit them as Pull Requests to the original repository when requested
+- you must contribute improvements upstream
+- you must not publish modified versions as independent repositories
+
+You may NOT:
+
+- fork the repository publicly
+- publish derivative repo
+- send modified version to others
+
+Any derivative work must remain under this same license.
+
+6. NO FORKS, MIRRORS OR DISTRIBUTION
+
+The following actions are expressly prohibited:
+
+- public forks
+- reposting source code or binaries
+- distributing copies privately or publicly
+- sublicensing to others
+- repackaging under a different name
+
+The original repository remains the only valid source distribution.
+
+7. TELEMETRY & IDENTIFICATION
+
+If telemetry is later included, you consent to:
+
+- anonymized usage tracking
+- execution frequency metrics
+- version reporting
+
+If disabled manually → usage is limited to localhost only.
+
+8. NON-COMPETITION CLAUSE
+
+You may NOT build or release:
+
+- competing integration platforms
+- workflow builder services
+- brick-based automation frameworks
+- direct or indirect substitutes
+
+even if implemented differently.
+
+You may build:
+
+- private internal workflows
+- connectors
+- personal extensions
+- UI refinements
+
+—but not publish them independently as a competing product.
+
+9. TERMINATION OF LICENSE
+
+This license terminates immediately if:
+
+- the software is deployed outside permitted scope
+- attribution is removed where required
+- commercial functionality is used without a paid license
+- distribution or forking occurs
+
+Upon termination:
+
+- you must stop using the software
+- delete all copies within 72 hours
+- cease access for additional users
+
+10. GOVERNING LAW AND VENUE
+
+Jurisdiction:
+
+Republic of Austria – Vienna Commercial Court
+
+Users outside Austria agree to comply with cross-border enforcement.
+
+11. LIABILITY DISCLAIMER
+
+Software is provided "AS IS" without warranty of any kind.
+
+The licensor is not liable for:
+
+- financial losses
+- automation side effects
+- incorrect processing
+- regulatory or legal damages
+- business harm
+- service disruption
+
+12. COMMERCIAL LICENSE CONTACT
+
+To obtain commercial rights, contact the licensor at:
+
+open an Issue at https://github.com/chavanashutosh/flowmason
+
+The licensor will:
+
+- issue pricing
+- provide agreement
+- offer support package options
+

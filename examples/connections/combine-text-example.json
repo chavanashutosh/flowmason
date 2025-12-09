@@ -1,0 +1,70 @@
+{
+  "name": "Combine Text Connection Examples",
+  "description": "Examples of combining multiple text fields into one",
+  "examples": [
+    {
+      "name": "Combine Name Fields",
+      "description": "Combine first and last name into full name",
+      "brick_type": "combine_text",
+      "config": {
+        "fields": ["first_name", "last_name"],
+        "separator": " ",
+        "output_field": "full_name"
+      },
+      "input_example": {
+        "first_name": "John",
+        "last_name": "Doe"
+      },
+      "output_example": {
+        "first_name": "John",
+        "last_name": "Doe",
+        "full_name": "John Doe"
+      }
+    },
+    {
+      "name": "Combine Address Fields",
+      "description": "Combine address components into full address",
+      "brick_type": "combine_text",
+      "config": {
+        "fields": ["street", "city", "state", "zip"],
+        "separator": ", ",
+        "output_field": "full_address"
+      },
+      "input_example": {
+        "street": "123 Main St",
+        "city": "New York",
+        "state": "NY",
+        "zip": "10001"
+      },
+      "output_example": {
+        "street": "123 Main St",
+        "city": "New York",
+        "state": "NY",
+        "zip": "10001",
+        "full_address": "123 Main St, New York, NY, 10001"
+      }
+    },
+    {
+      "name": "Combine with Custom Separator",
+      "description": "Combine fields with a custom separator",
+      "brick_type": "combine_text",
+      "config": {
+        "fields": ["product", "category", "sku"],
+        "separator": " | ",
+        "output_field": "product_info"
+      },
+      "input_example": {
+        "product": "Laptop",
+        "category": "Electronics",
+        "sku": "LAP-001"
+      },
+      "output_example": {
+        "product": "Laptop",
+        "category": "Electronics",
+        "sku": "LAP-001",
+        "product_info": "Laptop | Electronics | LAP-001"
+      }
+    }
+  ]
+}
+

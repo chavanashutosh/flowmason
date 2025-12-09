@@ -1,0 +1,79 @@
+{
+  "name": "Conditional Logic Connection Examples",
+  "description": "Examples of using conditional logic to route data",
+  "examples": [
+    {
+      "name": "VIP Status Check",
+      "description": "Set VIP status based on purchase amount",
+      "brick_type": "conditional",
+      "config": {
+        "condition_field": "total",
+        "condition": "> 1000",
+        "true_value": {
+          "status": "VIP",
+          "discount": 0.15
+        },
+        "false_value": {
+          "status": "Standard",
+          "discount": 0.0
+        },
+        "output_field": "customer_tier"
+      },
+      "input_example": {
+        "customer_id": "12345",
+        "total": 1500
+      },
+      "output_example": {
+        "customer_id": "12345",
+        "total": 1500,
+        "customer_tier": {
+          "status": "VIP",
+          "discount": 0.15
+        }
+      }
+    },
+    {
+      "name": "Priority Assignment",
+      "description": "Assign priority based on urgency field",
+      "brick_type": "conditional",
+      "config": {
+        "condition_field": "urgency",
+        "condition": "== 'high'",
+        "true_value": "High Priority",
+        "false_value": "Normal Priority",
+        "output_field": "priority"
+      },
+      "input_example": {
+        "ticket_id": "T-001",
+        "urgency": "high"
+      },
+      "output_example": {
+        "ticket_id": "T-001",
+        "urgency": "high",
+        "priority": "High Priority"
+      }
+    },
+    {
+      "name": "Deal Stage Routing",
+      "description": "Route deals to different stages based on amount",
+      "brick_type": "conditional",
+      "config": {
+        "condition_field": "amount",
+        "condition": "> 50000",
+        "true_value": "enterprise",
+        "false_value": "standard",
+        "output_field": "deal_type"
+      },
+      "input_example": {
+        "deal_name": "Enterprise Deal",
+        "amount": 75000
+      },
+      "output_example": {
+        "deal_name": "Enterprise Deal",
+        "amount": 75000,
+        "deal_type": "enterprise"
+      }
+    }
+  ]
+}
+

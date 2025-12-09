@@ -1,0 +1,66 @@
+{
+  "name": "n8n Webhook Pipeline",
+  "description": "Process data through multiple services using n8n webhooks",
+  "flow": {
+    "name": "n8n Webhook Pipeline",
+    "description": "Send data to n8n for processing and then sync results to HubSpot",
+    "bricks": [
+      {
+        "brick_type": "field_mapping",
+        "config": {
+          "mappings": [
+            {
+              "source_path": "event.type",
+              "target_path": "event_type"
+            },
+            {
+              "source_path": "event.data",
+              "target_path": "payload"
+            }
+          ]
+        }
+      },
+      {
+        "brick_type": "n8n",
+        "config": {
+          "webhook_url": "https://your-n8n-instance.com/webhook/process-data",
+          "method": "POST"
+        }
+      },
+      {
+        "brick_type": "field_mapping",
+        "config": {
+          "mappings": [
+            {
+              "source_path": "processed_data.customer_name",
+              "target_path": "properties.dealname"
+            },
+            {
+              "source_path": "processed_data.amount",
+              "target_path": "properties.amount"
+            }
+          ]
+        }
+      },
+      {
+        "brick_type": "hubspot",
+        "config": {
+          "api_key": "your-hubspot-api-key",
+          "operation": "create_deal"
+        }
+      }
+    ]
+  },
+  "use_case": "Process events through n8n workflows and sync processed data to HubSpot",
+  "input_example": {
+    "event": {
+      "type": "customer_signup",
+      "data": {
+        "customer_name": "John Doe",
+        "email": "john@example.com",
+        "signup_value": 5000
+      }
+    }
+  }
+}
+

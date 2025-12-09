@@ -1,0 +1,60 @@
+{
+  "name": "HubSpot Integration Examples",
+  "description": "Examples of HubSpot CRM integration configurations",
+  "examples": [
+    {
+      "name": "Create Deal",
+      "description": "Create a new deal in HubSpot",
+      "brick_type": "hubspot",
+      "config": {
+        "api_key": "your-hubspot-api-key",
+        "operation": "create_deal"
+      },
+      "input_example": {
+        "properties": {
+          "dealname": "New Customer Deal",
+          "amount": "50000",
+          "dealstage": "appointmentscheduled",
+          "pipeline": "default"
+        }
+      }
+    },
+    {
+      "name": "Get All Deals",
+      "description": "Retrieve all deals from HubSpot",
+      "brick_type": "hubspot",
+      "config": {
+        "api_key": "your-hubspot-api-key",
+        "operation": "get_deals"
+      },
+      "input_example": {}
+    },
+    {
+      "name": "Update Deal",
+      "description": "Update an existing deal in HubSpot",
+      "brick_type": "hubspot",
+      "config": {
+        "api_key": "your-hubspot-api-key",
+        "operation": "update_deal"
+      },
+      "input_example": {
+        "id": "deal-id-123",
+        "properties": {
+          "amount": "75000",
+          "dealstage": "qualifiedtobuy"
+        }
+      }
+    },
+    {
+      "name": "Get Contacts",
+      "description": "Retrieve all contacts from HubSpot",
+      "brick_type": "hubspot",
+      "config": {
+        "api_key": "your-hubspot-api-key",
+        "operation": "get_contacts"
+      },
+      "input_example": {}
+    }
+  ]
+}
+

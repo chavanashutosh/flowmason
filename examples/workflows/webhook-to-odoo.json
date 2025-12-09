@@ -1,0 +1,65 @@
+{
+  "name": "Webhook to Odoo Invoice Creation",
+  "description": "Create invoices in Odoo from webhook data",
+  "flow": {
+    "name": "Webhook to Odoo Invoice",
+    "description": "Process webhook data and create invoices in Odoo ERP",
+    "bricks": [
+      {
+        "brick_type": "field_mapping",
+        "config": {
+          "mappings": [
+            {
+              "source_path": "webhook.customer_id",
+              "target_path": "partner_id"
+            },
+            {
+              "source_path": "webhook.order_date",
+              "target_path": "invoice_date"
+            },
+            {
+              "source_path": "webhook.items",
+              "target_path": "invoice_line_ids"
+            }
+          ]
+        }
+      },
+      {
+        "brick_type": "conditional",
+        "config": {
+          "condition_field": "webhook.status",
+          "condition": "== 'paid'",
+          "true_value": "posted",
+          "false_value": "draft",
+          "output_field": "state"
+        }
+      },
+      {
+        "brick_type": "odoo",
+        "config": {
+          "url": "https://your-odoo-instance.com",
+          "database": "your-database-name",
+          "username": "your-username",
+          "password": "your-password",
+          "operation": "create_invoice"
+        }
+      }
+    ]
+  },
+  "use_case": "Automatically create invoices in Odoo when payment webhooks are received",
+  "input_example": {
+    "webhook": {
+      "customer_id": 123,
+      "order_date": "2024-01-15",
+      "status": "paid",
+      "items": [
+        {
+          "product_id": 1,
+          "quantity": 5,
+          "price_unit": 100.0
+        }
+      ]
+    }
+  }
+}
+

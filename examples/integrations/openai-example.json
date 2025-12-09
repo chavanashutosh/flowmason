@@ -1,0 +1,52 @@
+{
+  "name": "OpenAI Integration Examples",
+  "description": "Examples of OpenAI AI service integration configurations",
+  "examples": [
+    {
+      "name": "Text Generation",
+      "description": "Generate text using GPT models",
+      "brick_type": "openai",
+      "config": {
+        "api_key": "your-openai-api-key",
+        "model_name": "gpt-3.5-turbo",
+        "prompt_template": "Write a professional email about: {{topic}}",
+        "temperature": 0.7,
+        "max_tokens": 1000
+      },
+      "input_example": {
+        "topic": "product launch announcement"
+      }
+    },
+    {
+      "name": "Customer Support Response",
+      "description": "Generate customer support responses",
+      "brick_type": "openai",
+      "config": {
+        "api_key": "your-openai-api-key",
+        "model_name": "gpt-4",
+        "prompt_template": "Customer inquiry: {{inquiry}}\n\nGenerate a helpful response:",
+        "temperature": 0.5,
+        "max_tokens": 500
+      },
+      "input_example": {
+        "inquiry": "I need help with my order #12345"
+      }
+    },
+    {
+      "name": "Content Summarization",
+      "description": "Summarize long text content",
+      "brick_type": "openai",
+      "config": {
+        "api_key": "your-openai-api-key",
+        "model_name": "gpt-3.5-turbo",
+        "prompt_template": "Summarize the following text in 3 sentences:\n\n{{content}}",
+        "temperature": 0.3,
+        "max_tokens": 200
+      },
+      "input_example": {
+        "content": "Long article text here..."
+      }
+    }
+  ]
+}
+

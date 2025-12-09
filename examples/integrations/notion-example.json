@@ -1,0 +1,66 @@
+{
+  "name": "Notion Integration Examples",
+  "description": "Examples of Notion workspace integration configurations",
+  "examples": [
+    {
+      "name": "Create Page",
+      "description": "Create a new page in a Notion database",
+      "brick_type": "notion",
+      "config": {
+        "api_key": "your-notion-api-key",
+        "database_id": "your-database-id",
+        "operation": "create_page"
+      },
+      "input_example": {
+        "properties": {
+          "title": {
+            "title": [
+              {
+                "text": {
+                  "content": "New Project Page"
+                }
+              }
+            ]
+          },
+          "Status": {
+            "select": {
+              "name": "In Progress"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Get Pages",
+      "description": "Retrieve all pages from a Notion database",
+      "brick_type": "notion",
+      "config": {
+        "api_key": "your-notion-api-key",
+        "database_id": "your-database-id",
+        "operation": "get_pages"
+      },
+      "input_example": {}
+    },
+    {
+      "name": "Update Page",
+      "description": "Update an existing page in Notion",
+      "brick_type": "notion",
+      "config": {
+        "api_key": "your-notion-api-key",
+        "database_id": "your-database-id",
+        "operation": "update_page"
+      },
+      "input_example": {
+        "page_id": "page-id-123",
+        "properties": {
+          "Status": {
+            "select": {
+              "name": "Completed"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
+

@@ -1,0 +1,52 @@
+{
+  "name": "n8n Integration Examples",
+  "description": "Examples of n8n webhook integration configurations",
+  "examples": [
+    {
+      "name": "POST Webhook",
+      "description": "Send data to n8n webhook via POST",
+      "brick_type": "n8n",
+      "config": {
+        "webhook_url": "https://your-n8n-instance.com/webhook/your-webhook-id",
+        "method": "POST"
+      },
+      "input_example": {
+        "event": "customer_signup",
+        "customer_id": "12345",
+        "email": "customer@example.com",
+        "timestamp": "2024-01-15T10:30:00Z"
+      }
+    },
+    {
+      "name": "GET Webhook",
+      "description": "Trigger n8n workflow via GET request",
+      "brick_type": "n8n",
+      "config": {
+        "webhook_url": "https://your-n8n-instance.com/webhook/your-webhook-id",
+        "method": "GET"
+      },
+      "input_example": {
+        "action": "sync_data",
+        "source": "crm"
+      }
+    },
+    {
+      "name": "PUT Webhook",
+      "description": "Update data via n8n webhook using PUT",
+      "brick_type": "n8n",
+      "config": {
+        "webhook_url": "https://your-n8n-instance.com/webhook/your-webhook-id",
+        "method": "PUT"
+      },
+      "input_example": {
+        "id": "record-123",
+        "status": "updated",
+        "data": {
+          "field1": "value1",
+          "field2": "value2"
+        }
+      }
+    }
+  ]
+}
+
