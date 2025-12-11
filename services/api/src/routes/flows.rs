@@ -2,7 +2,7 @@ use axum::{
     extract::Path,
     http::StatusCode,
     response::Json,
-    routing::{get, post, put, delete},
+    routing::{get, post},
     Router,
 };
 use uuid::Uuid;

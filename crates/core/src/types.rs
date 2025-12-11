@@ -61,7 +61,7 @@ pub struct UsageLog {
     pub execution_id: String,
     pub timestamp: chrono::DateTime<chrono::Utc>,
     pub cost_unit: f64,
-    pub token_usage: Option<u64>,
+    pub token_usage: Option<i64>,
     pub metadata: Option<Value>,
 }
 

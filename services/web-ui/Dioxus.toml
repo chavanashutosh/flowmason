@@ -1,0 +1,10 @@
+[application]
+name = "FlowMason Web UI"
+default_platform = "web"
+out_dir = "dist"
+asset_dir = "assets"
+
+[web]
+app = { title = "FlowMason - Visual Automation Platform" }
+watcher = { reload_html = true, watch_path = ["src", "assets"] }
+

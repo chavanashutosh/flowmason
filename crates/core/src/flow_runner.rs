@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::brick_traits::{Brick, BrickError};
 use crate::quota::{QuotaError, QuotaManager};
-use crate::types::{Flow, FlowExecution, ExecutionStatus, BrickType};
+use crate::types::{Flow, FlowExecution, ExecutionStatus, BrickType, UsageLog};
 use async_trait::async_trait;
 
 #[derive(Debug, Error)]
@@ -47,6 +47,15 @@ pub trait UsageLogger: Send + Sync {
         token_usage: Option<u64>,
         metadata: Option<Value>,
     ) -> Result<String, Box<dyn std::error::Error + Send + Sync>>;
+
+    async fn get_all_logs(
+        &self,
+    ) -> Result<Vec<UsageLog>, Box<dyn std::error::Error + Send + Sync>>;
+
+    async fn get_daily_usage_count(
+        &self,
+        brick_type: &BrickType,
+    ) -> Result<u64, Box<dyn std::error::Error + Send + Sync>>;
 }
 
 pub struct FlowRunner;

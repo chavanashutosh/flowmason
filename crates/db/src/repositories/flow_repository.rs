@@ -14,6 +14,11 @@ impl FlowRepository {
     }
 
     pub async fn create(&self, flow: &Flow) -> Result<()> {
+        let bricks_json = serde_json::to_string(&flow.bricks)?;
+        let created_at_str = flow.created_at.to_rfc3339();
+        let updated_at_str = flow.updated_at.to_rfc3339();
+        let active_i64 = flow.active as i64;
+        
         sqlx::query!(
             r#"
             INSERT INTO flows (id, name, description, bricks, active, created_at, updated_at)
@@ -22,10 +27,10 @@ impl FlowRepository {
             flow.id,
             flow.name,
             flow.description,
-            serde_json::to_string(&flow.bricks)?,
-            flow.active,
-            flow.created_at,
-            flow.updated_at
+            bricks_json,
+            active_i64,
+            created_at_str,
+            updated_at_str
         )
         .execute(&self.pool)
         .await?;
@@ -48,13 +53,17 @@ impl FlowRepository {
         if let Some(row) = row {
             let bricks: Value = serde_json::from_str(&row.bricks)?;
             Ok(Some(Flow {
-                id: row.id,
+                id: row.id.expect("id should not be null"),
                 name: row.name,
                 description: row.description,
                 bricks: serde_json::from_value(bricks)?,
-                active: row.active,
-                created_at: row.created_at,
-                updated_at: row.updated_at,
+                active: row.active != 0,
+                created_at: chrono::DateTime::parse_from_rfc3339(&row.created_at)
+                    .map_err(|e| anyhow::anyhow!("Failed to parse created_at: {}", e))?
+                    .with_timezone(&chrono::Utc),
+                updated_at: chrono::DateTime::parse_from_rfc3339(&row.updated_at)
+                    .map_err(|e| anyhow::anyhow!("Failed to parse updated_at: {}", e))?
+                    .with_timezone(&chrono::Utc),
             }))
         } else {
             Ok(None)
@@ -76,13 +85,17 @@ impl FlowRepository {
         for row in rows {
             let bricks: Value = serde_json::from_str(&row.bricks)?;
             flows.push(Flow {
-                id: row.id,
+                id: row.id.expect("id should not be null"),
                 name: row.name,
                 description: row.description,
                 bricks: serde_json::from_value(bricks)?,
-                active: row.active,
-                created_at: row.created_at,
-                updated_at: row.updated_at,
+                active: row.active != 0,
+                created_at: chrono::DateTime::parse_from_rfc3339(&row.created_at)
+                    .map_err(|e| anyhow::anyhow!("Failed to parse created_at: {}", e))?
+                    .with_timezone(&chrono::Utc),
+                updated_at: chrono::DateTime::parse_from_rfc3339(&row.updated_at)
+                    .map_err(|e| anyhow::anyhow!("Failed to parse updated_at: {}", e))?
+                    .with_timezone(&chrono::Utc),
             });
         }
 
@@ -90,6 +103,10 @@ impl FlowRepository {
     }
 
     pub async fn update(&self, flow: &Flow) -> Result<()> {
+        let bricks_json = serde_json::to_string(&flow.bricks)?;
+        let updated_at_str = flow.updated_at.to_rfc3339();
+        let active_i64 = flow.active as i64;
+        
         sqlx::query!(
             r#"
             UPDATE flows
@@ -99,9 +116,9 @@ impl FlowRepository {
             flow.id,
             flow.name,
             flow.description,
-            serde_json::to_string(&flow.bricks)?,
-            flow.active,
-            flow.updated_at
+            bricks_json,
+            active_i64,
+            updated_at_str
         )
         .execute(&self.pool)
         .await?;

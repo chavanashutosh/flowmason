@@ -55,18 +55,18 @@ impl ApiKeyRepository {
 
         if let Some(row) = row {
             Ok(Some(ApiKey {
-                id: row.id,
+                id: row.id.expect("id should not be null"),
                 user_id: row.user_id,
                 key_hash: row.key_hash,
                 name: row.name,
                 created_at: chrono::DateTime::parse_from_rfc3339(&row.created_at)
-                    .unwrap()
+                    .map_err(|e| anyhow::anyhow!("Failed to parse created_at: {}", e))?
                     .with_timezone(&chrono::Utc),
-                last_used_at: row.last_used_at.map(|s| {
-                    chrono::DateTime::parse_from_rfc3339(&s)
-                        .unwrap()
-                        .with_timezone(&chrono::Utc)
-                }),
+                last_used_at: row.last_used_at.as_ref().map(|s| {
+                    chrono::DateTime::parse_from_rfc3339(s)
+                        .map_err(|e| anyhow::anyhow!("Failed to parse last_used_at: {}", e))
+                        .map(|dt| dt.with_timezone(&chrono::Utc))
+                }).transpose()?,
             }))
         } else {
             Ok(None)
@@ -103,19 +103,21 @@ impl ApiKeyRepository {
         .fetch_all(&self.pool)
         .await?;
 
-        Ok(rows.into_iter().map(|row| ApiKey {
-            id: row.id,
-            user_id: row.user_id,
-            key_hash: row.key_hash,
-            name: row.name,
-            created_at: chrono::DateTime::parse_from_rfc3339(&row.created_at)
-                .unwrap()
-                .with_timezone(&chrono::Utc),
-            last_used_at: row.last_used_at.map(|s| {
-                chrono::DateTime::parse_from_rfc3339(&s)
+        Ok(rows.into_iter().map(|row| {
+            ApiKey {
+                id: row.id.expect("id should not be null"),
+                user_id: row.user_id,
+                key_hash: row.key_hash,
+                name: row.name,
+                created_at: chrono::DateTime::parse_from_rfc3339(&row.created_at)
                     .unwrap()
-                    .with_timezone(&chrono::Utc)
-            }),
+                    .with_timezone(&chrono::Utc),
+                last_used_at: row.last_used_at.as_ref().map(|s| {
+                    chrono::DateTime::parse_from_rfc3339(s)
+                        .unwrap()
+                        .with_timezone(&chrono::Utc)
+                }),
+            }
         }).collect())
     }
 
@@ -133,18 +135,18 @@ impl ApiKeyRepository {
 
         if let Some(row) = row {
             Ok(Some(ApiKey {
-                id: row.id,
+                id: row.id.expect("id should not be null"),
                 user_id: row.user_id,
                 key_hash: row.key_hash,
                 name: row.name,
                 created_at: chrono::DateTime::parse_from_rfc3339(&row.created_at)
-                    .unwrap()
+                    .map_err(|e| anyhow::anyhow!("Failed to parse created_at: {}", e))?
                     .with_timezone(&chrono::Utc),
-                last_used_at: row.last_used_at.map(|s| {
-                    chrono::DateTime::parse_from_rfc3339(&s)
-                        .unwrap()
-                        .with_timezone(&chrono::Utc)
-                }),
+                last_used_at: row.last_used_at.as_ref().map(|s| {
+                    chrono::DateTime::parse_from_rfc3339(s.as_str())
+                        .map_err(|e| anyhow::anyhow!("Failed to parse last_used_at: {}", e))
+                        .map(|dt| dt.with_timezone(&chrono::Utc))
+                }).transpose()?,
             }))
         } else {
             Ok(None)

@@ -15,6 +15,10 @@ impl UsageLogRepository {
     }
 
     pub async fn create(&self, log: &UsageLog) -> Result<()> {
+        let timestamp_str = log.timestamp.to_rfc3339();
+        let token_usage_i64 = log.token_usage.map(|v| v as i64);
+        let metadata_json = log.metadata.as_ref().map(|v| serde_json::to_string(v).unwrap_or_default());
+        
         sqlx::query!(
             r#"
             INSERT INTO usage_logs (id, brick_name, flow_id, execution_id, timestamp, cost_unit, token_usage, metadata)
@@ -24,10 +28,10 @@ impl UsageLogRepository {
             log.brick_name,
             log.flow_id,
             log.execution_id,
-            log.timestamp,
+            timestamp_str,
             log.cost_unit,
-            log.token_usage,
-            log.metadata.as_ref().map(|v| serde_json::to_string(v).unwrap_or_default())
+            token_usage_i64,
+            metadata_json
         )
         .execute(&self.pool)
         .await?;
@@ -51,14 +55,16 @@ impl UsageLogRepository {
         let mut logs = Vec::new();
         for row in rows {
             logs.push(UsageLog {
-                id: row.id,
+                id: row.id.expect("id should not be null"),
                 brick_name: row.brick_name,
                 flow_id: row.flow_id,
                 execution_id: row.execution_id,
-                timestamp: row.timestamp,
+                timestamp: chrono::DateTime::parse_from_rfc3339(&row.timestamp)
+                    .map_err(|e| anyhow::anyhow!("Failed to parse timestamp: {}", e))?
+                    .with_timezone(&chrono::Utc),
                 cost_unit: row.cost_unit,
                 token_usage: row.token_usage,
-                metadata: row.metadata.map(|s| serde_json::from_str(&s).unwrap_or(Value::Null)),
+                metadata: row.metadata.as_ref().map(|s| serde_json::from_str(s.as_str()).unwrap_or(Value::Null)),
             });
         }
 
@@ -79,14 +85,16 @@ impl UsageLogRepository {
         let mut logs = Vec::new();
         for row in rows {
             logs.push(UsageLog {
-                id: row.id,
+                id: row.id.expect("id should not be null"),
                 brick_name: row.brick_name,
                 flow_id: row.flow_id,
                 execution_id: row.execution_id,
-                timestamp: row.timestamp,
+                timestamp: chrono::DateTime::parse_from_rfc3339(&row.timestamp)
+                    .map_err(|e| anyhow::anyhow!("Failed to parse timestamp: {}", e))?
+                    .with_timezone(&chrono::Utc),
                 cost_unit: row.cost_unit,
                 token_usage: row.token_usage,
-                metadata: row.metadata.map(|s| serde_json::from_str(&s).unwrap_or(Value::Null)),
+                metadata: row.metadata.as_ref().map(|s| serde_json::from_str(s.as_str()).unwrap_or(Value::Null)),
             });
         }
 
@@ -110,14 +118,16 @@ impl UsageLogRepository {
         let mut logs = Vec::new();
         for row in rows {
             logs.push(UsageLog {
-                id: row.id,
+                id: row.id.expect("id should not be null"),
                 brick_name: row.brick_name,
                 flow_id: row.flow_id,
                 execution_id: row.execution_id,
-                timestamp: row.timestamp,
+                timestamp: chrono::DateTime::parse_from_rfc3339(&row.timestamp)
+                    .map_err(|e| anyhow::anyhow!("Failed to parse timestamp: {}", e))?
+                    .with_timezone(&chrono::Utc),
                 cost_unit: row.cost_unit,
                 token_usage: row.token_usage,
-                metadata: row.metadata.map(|s| serde_json::from_str(&s).unwrap_or(Value::Null)),
+                metadata: row.metadata.as_ref().map(|s| serde_json::from_str(s.as_str()).unwrap_or(Value::Null)),
             });
         }
 
@@ -127,8 +137,10 @@ impl UsageLogRepository {
     pub async fn get_daily_usage_count(&self, brick_type: &BrickType) -> Result<u64> {
         let brick_name = format!("{:?}", brick_type).to_lowercase();
         let today = Utc::now().date_naive();
-        let today_start = Utc::from_utc_datetime(&Utc, &today.and_hms_opt(0, 0, 0).unwrap());
-        let today_end = Utc::from_utc_datetime(&Utc, &today.and_hms_opt(23, 59, 59).unwrap());
+        let today_start = today.and_hms_opt(0, 0, 0).unwrap().and_utc();
+        let today_end = today.and_hms_opt(23, 59, 59).unwrap().and_utc();
+        let today_start_str = today_start.to_rfc3339();
+        let today_end_str = today_end.to_rfc3339();
 
         let count = sqlx::query!(
             r#"
@@ -139,8 +151,8 @@ impl UsageLogRepository {
             AND timestamp <= ?3
             "#,
             brick_name,
-            today_start,
-            today_end
+            today_start_str,
+            today_end_str
         )
         .fetch_one(&self.pool)
         .await?;
@@ -151,8 +163,10 @@ impl UsageLogRepository {
     /// Get daily usage count for a brick by name (for custom bricks)
     pub async fn get_daily_usage_count_by_name(&self, brick_name: &str) -> Result<u64> {
         let today = Utc::now().date_naive();
-        let today_start = Utc::from_utc_datetime(&Utc, &today.and_hms_opt(0, 0, 0).unwrap());
-        let today_end = Utc::from_utc_datetime(&Utc, &today.and_hms_opt(23, 59, 59).unwrap());
+        let today_start = today.and_hms_opt(0, 0, 0).unwrap().and_utc();
+        let today_end = today.and_hms_opt(23, 59, 59).unwrap().and_utc();
+        let today_start_str = today_start.to_rfc3339();
+        let today_end_str = today_end.to_rfc3339();
 
         let count = sqlx::query!(
             r#"
@@ -163,8 +177,8 @@ impl UsageLogRepository {
             AND timestamp <= ?3
             "#,
             brick_name,
-            today_start,
-            today_end
+            today_start_str,
+            today_end_str
         )
         .fetch_one(&self.pool)
         .await?;

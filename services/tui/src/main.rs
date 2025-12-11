@@ -29,6 +29,7 @@ struct FlowItem {
     active: bool,
 }
 
+#[derive(Clone)]
 enum AppMode {
     FlowsList,
     FlowDetails(String),
@@ -174,7 +175,7 @@ fn ui(f: &mut Frame, app: &mut App) {
             Constraint::Min(0),
             Constraint::Length(3),
         ])
-        .split(f.area());
+        .split(f.size());
 
     // Title
     let title = Paragraph::new("🧱 FlowMason - Visual Automation Platform")
@@ -183,9 +184,9 @@ fn ui(f: &mut Frame, app: &mut App) {
     f.render_widget(title, chunks[0]);
 
     // Main content
-    match &mut app.mode {
+    match app.mode.clone() {
         AppMode::FlowsList => render_flows_list(f, app, chunks[1]),
-        AppMode::FlowDetails(id) => render_flow_details(f, app, id, chunks[1]),
+        AppMode::FlowDetails(id) => render_flow_details(f, app, &id, chunks[1]),
         AppMode::Help => render_help(f, chunks[1]),
     }
 

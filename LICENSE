@@ -1,186 +1,305 @@
+FlowMason License
 Version 2.0 — 2025
 
 Copyright © 2025 FlowMason
-
 Developed and maintained by: Ashutosh Ramrao Chavan (https://github.com/chavanashutosh)
-
 Made with love in Vienna
 
 This project is open to contributors. Contributions are welcome through Pull Requests.
 
 All rights reserved.
 
-1. PURPOSE OF THIS LICENSE
+================================================================================
+FLOWMASON LICENSE AGREEMENT
+================================================================================
 
-This software is provided for personal, private, local execution only.
+This License Agreement ("Agreement") governs the use of FlowMason software 
+("Software") and any associated documentation ("Documentation"). By using, 
+copying, modifying, or distributing the Software, you agree to be bound by 
+the terms of this Agreement.
 
-Commercial usage, public hosting, redistribution, or resale is not permitted without written approval and a commercial license.
+================================================================================
+1. DEFINITIONS
+================================================================================
 
-2. FREE USAGE CONDITIONS
+"Software" means FlowMason, including all source code, binaries, 
+documentation, and any modifications or derivative works.
 
-You may use the software free of charge only if ALL below are true:
+"Commercial Use" means any use of the Software:
+  - In a business, commercial, or institutional environment
+  - For generating revenue or providing services to third parties
+  - In a multi-user or shared environment
+  - On infrastructure accessible beyond localhost
+  - For providing automation services to clients or customers
+  - In any context where money is exchanged for access or services
 
-- It runs locally on a personal device
-- It is accessed only by you (single user)
-- It does NOT run on a public domain or external network
-- You are not charging money for its usage
-- You are not providing workflows to business clients
-- It is not deployed inside a business or institutional infrastructure
-- It is not used to automate tasks for others
+"Personal Use" means use that meets ALL of the following conditions:
+  - Runs locally on a personal device (localhost or 127.0.0.1)
+  - Accessed only by a single individual user
+  - Not accessible via public domain or external network
+  - Not used to generate revenue or provide services to others
+  - Not deployed in business or institutional infrastructure
 
-Examples allowed:
+================================================================================
+2. GRANT OF LICENSE
+================================================================================
 
-- http://localhost:3000
-- http://127.0.0.1:PORT
-- Private device usage
+Subject to the terms and conditions of this Agreement, you are granted a 
+limited, non-exclusive, non-transferable, revocable license to use the 
+Software solely for Personal Use as defined above.
 
-Examples NOT allowed without paid license:
+This license does NOT grant you the right to:
+  - Use the Software for Commercial Use
+  - Distribute, sublicense, or transfer the Software to third parties
+  - Create public forks or mirrors of the Software
+  - Remove or alter copyright notices or attribution requirements
+  - Use the Software to build competing products or services
 
-- domain.com
-- dev.company.local
-- Internal company server
-- Shared VPS
-- Shared office installation
+================================================================================
+3. COMMERCIAL USE RESTRICTIONS
+================================================================================
 
-3. HOSTED OR PUBLIC DEPLOYMENT REQUIREMENTS
+COMMERCIAL USE IS STRICTLY PROHIBITED WITHOUT A COMMERCIAL LICENSE.
 
-If deployed outside localhost:
+Without a valid commercial license, you may NOT:
 
-A clear attribution MUST appear visibly:
+  a) Sell, rent, lease, or otherwise monetize access to the Software
+  b) Use the Software as part of a Software-as-a-Service (SaaS) offering
+  c) Deploy the Software in corporate, business, or institutional environments
+  d) Use the Software to provide automation services to clients or customers
+  e) Charge fees for workflows, integrations, or services built using the Software
+  f) Include the Software in paid products or commercial offerings
+  g) Deploy the Software on public domains, shared infrastructure, or VPS
+  h) Allow multiple users or shared access to the Software
 
-Built using FlowMason — https://github.com/chavanashutosh/flowmason
+Examples of PROHIBITED Commercial Use:
+  - Deploying to domain.com or any public domain
+  - Running on dev.company.local or internal company networks
+  - Hosting on AWS, DigitalOcean, or other cloud providers for others
+  - Using to automate tasks for paying clients
+  - Including in products or services you sell
 
-This attribution must be:
+Examples of ALLOWED Personal Use:
+  - Running on http://localhost:3000 for personal projects
+  - Using http://127.0.0.1:PORT for individual automation
+  - Personal device usage for non-commercial purposes
 
-- readable
-- included in UI footer or about page
-- not hidden or minimized
+To obtain a commercial license, contact the licensor by opening an Issue at:
+https://github.com/chavanashutosh/flowmason
 
-Additionally:
+================================================================================
+4. MODIFICATIONS AND CONTRIBUTIONS
+================================================================================
 
-- branding and original name cannot be removed or replaced
-- "FlowMason" must remain visible
+This project welcomes contributions from the community. You may modify the 
+Software for Personal Use under the following conditions:
 
-4. COMMERCIAL RESTRICTIONS
-
-Without a commercial license you may NOT:
-
-- sell access to FlowMason
-- run it as SaaS for customers
-- include it inside paid systems
-- charge clients for workflows executed using FlowMason
-- deploy in corporate environments
-- deliver automation services that rely on it
-- monetize integrations developed inside FlowMason
-
-Commercial use requires direct agreement with the licensor.
-
-5. MODIFICATIONS AND CONTRIBUTIONS
-
-This project is open to contributors. Contributions are welcome through Pull Requests to the original repository at https://github.com/chavanashutosh/flowmason.
-
-You may modify the software under these conditions:
-
-- modifications remain private
-- you must submit them as Pull Requests to the original repository when requested
-- you must contribute improvements upstream
-- you must not publish modified versions as independent repositories
+  a) Modifications must remain private or be contributed back to the original 
+     repository via Pull Request
+  b) You must submit improvements upstream when requested
+  c) You may not publish modified versions as independent repositories
+  d) Any derivative work must remain under this same license
 
 You may NOT:
+  - Create public forks of the repository
+  - Publish derivative repositories
+  - Distribute modified versions to others
+  - Repackage the Software under a different name
 
-- fork the repository publicly
-- publish derivative repo
-- send modified version to others
+Contributions submitted via Pull Request will be reviewed and, if accepted, 
+will be incorporated into the Software. By submitting contributions, you grant 
+the licensor a perpetual, worldwide, non-exclusive license to use, modify, 
+and distribute your contributions under this Agreement.
 
-Any derivative work must remain under this same license.
-
-6. NO FORKS, MIRRORS OR DISTRIBUTION
+================================================================================
+5. DISTRIBUTION RESTRICTIONS
+================================================================================
 
 The following actions are expressly prohibited:
 
-- public forks
-- reposting source code or binaries
-- distributing copies privately or publicly
-- sublicensing to others
-- repackaging under a different name
+  a) Public forks, mirrors, or copies of the repository
+  b) Reposting source code or binaries on other platforms
+  c) Distributing copies privately or publicly
+  d) Sublicensing the Software to others
+  e) Repackaging under a different name or branding
+  f) Creating alternative distributions or builds
 
-The original repository remains the only valid source distribution.
+The original repository at https://github.com/chavanashutosh/flowmason remains 
+the only authorized source distribution. You may download and use the Software 
+for Personal Use, but you may not redistribute it.
 
-7. TELEMETRY & IDENTIFICATION
+================================================================================
+6. ATTRIBUTION REQUIREMENTS
+================================================================================
 
-If telemetry is later included, you consent to:
+If you deploy the Software outside localhost (with written permission and a 
+commercial license), you MUST display clear attribution:
 
-- anonymized usage tracking
-- execution frequency metrics
-- version reporting
+"Built using FlowMason — https://github.com/chavanashutosh/flowmason"
 
-If disabled manually → usage is limited to localhost only.
+This attribution must be:
+  - Visible and readable in the user interface
+  - Included in the footer, about page, or similar prominent location
+  - Not hidden, minimized, or obscured
+  - Present in all deployments
 
-8. NON-COMPETITION CLAUSE
+Additionally:
+  - The "FlowMason" branding and name cannot be removed or replaced
+  - Original copyright notices must be preserved
+  - The Software's identity must remain visible
 
-You may NOT build or release:
+================================================================================
+7. NON-COMPETITION CLAUSE
+================================================================================
 
-- competing integration platforms
-- workflow builder services
-- brick-based automation frameworks
-- direct or indirect substitutes
+You may NOT use the Software to build, develop, or release:
 
-even if implemented differently.
+  a) Competing integration platforms or workflow automation services
+  b) Workflow builder services or visual automation tools
+  c) Brick-based automation frameworks or similar architectures
+  d) Direct or indirect substitutes for FlowMason
 
-You may build:
+This restriction applies even if:
+  - Implemented using different technologies
+  - Given a different name or branding
+  - Modified or adapted significantly
 
-- private internal workflows
-- connectors
-- personal extensions
-- UI refinements
+You MAY build:
+  - Private internal workflows for Personal Use
+  - Connectors or integrations to contribute back to FlowMason
+  - Personal extensions or UI refinements
+  - Improvements to FlowMason itself
 
-—but not publish them independently as a competing product.
+However, you may NOT publish these independently as competing products.
 
-9. TERMINATION OF LICENSE
+================================================================================
+8. TELEMETRY AND IDENTIFICATION
+================================================================================
 
-This license terminates immediately if:
+If telemetry or usage tracking is included in future versions of the Software, 
+you consent to:
 
-- the software is deployed outside permitted scope
-- attribution is removed where required
-- commercial functionality is used without a paid license
-- distribution or forking occurs
+  a) Anonymized usage tracking and metrics collection
+  b) Execution frequency and feature usage reporting
+  c) Version and environment information reporting
+
+This data helps improve the Software and is collected anonymously.
+
+If you disable telemetry manually, your usage is limited to localhost only, 
+and you may not deploy the Software publicly.
+
+================================================================================
+9. TERMINATION
+================================================================================
+
+This license terminates immediately and automatically if:
+
+  a) You deploy the Software outside the permitted Personal Use scope
+  b) You remove or fail to display required attribution
+  c) You use the Software for Commercial Use without a valid commercial license
+  d) You distribute, fork, or create derivative works in violation of this Agreement
+  e) You violate any other term of this Agreement
 
 Upon termination:
+  a) You must immediately stop using the Software
+  b) You must delete all copies of the Software within 72 hours
+  c) You must cease providing access to any users
+  d) All rights granted under this Agreement are revoked
 
-- you must stop using the software
-- delete all copies within 72 hours
-- cease access for additional users
+================================================================================
+10. INTELLECTUAL PROPERTY
+================================================================================
 
-10. GOVERNING LAW AND VENUE
+The Software and Documentation are protected by copyright laws and 
+international copyright treaties. All title and copyrights in and to the 
+Software, Documentation, and any copies are owned by the licensor.
 
-Jurisdiction:
+This Agreement does not grant you any intellectual property rights in the 
+Software beyond the limited license rights expressly set forth herein.
 
-Republic of Austria – Vienna Commercial Court
+================================================================================
+11. WARRANTY DISCLAIMER
+================================================================================
 
-Users outside Austria agree to comply with cross-border enforcement.
-
-11. LIABILITY DISCLAIMER
-
-Software is provided "AS IS" without warranty of any kind.
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER 
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, 
+OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
+THE SOFTWARE.
 
 The licensor is not liable for:
+  - Financial losses resulting from use of the Software
+  - Automation errors, side effects, or incorrect processing
+  - Regulatory or legal damages
+  - Business harm or service disruptions
+  - Data loss or corruption
+  - Any other damages arising from use of the Software
 
-- financial losses
-- automation side effects
-- incorrect processing
-- regulatory or legal damages
-- business harm
-- service disruption
+================================================================================
+12. LIMITATION OF LIABILITY
+================================================================================
 
-12. COMMERCIAL LICENSE CONTACT
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL THE 
+LICENSOR BE LIABLE FOR ANY SPECIAL, INCIDENTAL, INDIRECT, OR CONSEQUENTIAL 
+DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES FOR LOSS OF 
+BUSINESS PROFITS, BUSINESS INTERRUPTION, LOSS OF BUSINESS INFORMATION, OR ANY 
+OTHER PECUNIARY LOSS) ARISING OUT OF THE USE OF OR INABILITY TO USE THE 
+SOFTWARE, EVEN IF THE LICENSOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH 
+DAMAGES.
 
-To obtain commercial rights, contact the licensor at:
+================================================================================
+13. GOVERNING LAW AND JURISDICTION
+================================================================================
 
-open an Issue at https://github.com/chavanashutosh/flowmason
+This Agreement shall be governed by and construed in accordance with the laws 
+of the Republic of Austria, without regard to its conflict of law provisions.
+
+Any disputes arising out of or relating to this Agreement shall be subject to 
+the exclusive jurisdiction of the Vienna Commercial Court (Handelsgericht Wien).
+
+Users outside Austria agree to comply with cross-border enforcement and 
+submit to the jurisdiction of Austrian courts.
+
+================================================================================
+14. GENERAL PROVISIONS
+================================================================================
+
+a) Entire Agreement: This Agreement constitutes the entire agreement between 
+   you and the licensor regarding the Software.
+
+b) Severability: If any provision of this Agreement is held to be invalid or 
+   unenforceable, the remaining provisions shall remain in full force and effect.
+
+c) Waiver: The failure to exercise or enforce any right or provision of this 
+   Agreement shall not constitute a waiver of such right or provision.
+
+d) Assignment: You may not assign or transfer this Agreement or any rights 
+   hereunder without the prior written consent of the licensor.
+
+e) Updates: The licensor reserves the right to modify this Agreement. 
+   Continued use of the Software after modifications constitutes acceptance 
+   of the modified terms.
+
+================================================================================
+15. COMMERCIAL LICENSE CONTACT
+================================================================================
+
+To obtain commercial rights or discuss commercial licensing options, contact 
+the licensor by:
+
+Opening an Issue at: https://github.com/chavanashutosh/flowmason
 
 The licensor will:
+  - Provide pricing information
+  - Issue a commercial license agreement
+  - Offer support package options
+  - Answer questions about permitted uses
 
-- issue pricing
-- provide agreement
-- offer support package options
+================================================================================
+END OF LICENSE AGREEMENT
+================================================================================
 
+For questions or clarifications about this license, please open an Issue at:
+https://github.com/chavanashutosh/flowmason

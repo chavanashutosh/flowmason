@@ -2,6 +2,7 @@ mod server;
 mod routes;
 mod dto;
 mod error;
+mod templates;
 
 use server::start_server;
 

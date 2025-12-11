@@ -5,7 +5,6 @@ use crate::user::Claims;
 pub struct JwtService {
     encoding_key: EncodingKey,
     decoding_key: DecodingKey,
-    secret: String,
 }
 
 impl JwtService {
@@ -16,7 +15,6 @@ impl JwtService {
         Self {
             encoding_key,
             decoding_key,
-            secret,
         }
     }
 

@@ -7,6 +7,7 @@ use axum::{
 use crate::dto::{BrickListResponse, BrickSchemaResponse};
 use flowmason_bricks::*;
 use flowmason_core::types::BrickType;
+use flowmason_core::Brick;
 
 pub fn routes() -> Router {
     Router::new()

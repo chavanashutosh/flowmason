@@ -1,5 +1,5 @@
 use flowmason_bricks::*;
-use flowmason_core::types::BrickType;
+use flowmason_core::{types::BrickType, Brick};
 use serde_json::{json, Value};
 
 pub fn generate_mapping_schema() -> Value {

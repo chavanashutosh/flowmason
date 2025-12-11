@@ -6,8 +6,11 @@ edition.workspace = true
 [dependencies]
 flowmason-core = { path = "../core" }
 flowmason-bricks = { path = "../bricks" }
+flowmason-db = { path = "../db" }
 tokio = { workspace = true }
 tokio-cron-scheduler = { workspace = true }
 anyhow = { workspace = true }
 serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
 

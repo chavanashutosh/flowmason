@@ -2,15 +2,13 @@ use axum::{
     extract::Path,
     http::StatusCode,
     response::Json,
-    routing::{get, post, delete},
+    routing::{post, delete},
     Router,
 };
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use crate::routes::AuthState;
 use flowmason_auth::{JwtService, ApiKeyService, AuthContext};
-use flowmason_db::repositories::{UserRepository, ApiKeyRepository};
 use axum::extract::Extension;
 
 #[derive(Deserialize)]

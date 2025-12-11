@@ -11,10 +11,12 @@ flowmason-scheduler = { path = "../../crates/scheduler" }
 flowmason-db = { path = "../../crates/db" }
 flowmason-auth = { path = "../../crates/auth" }
 axum = { workspace = true }
-tower = { workspace = true }
-tower-http = { workspace = true }
+tower = { workspace = true, features = ["timeout", "make"] }
+tower-http = { workspace = true, features = ["fs", "cors"] }
+hyper = { version = "0.14", features = ["full"] }
 tower-governor = { version = "0.2", package = "tower_governor" }
 tokio = { workspace = true }
+sqlx = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 anyhow = { workspace = true }
@@ -22,4 +24,5 @@ thiserror = { workspace = true }
 uuid = { workspace = true }
 chrono = { workspace = true }
 bcrypt = "0.15"
+askama = { version = "0.12", features = ["with-axum"] }
 

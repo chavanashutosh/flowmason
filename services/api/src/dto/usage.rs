@@ -22,12 +22,13 @@ impl From<CoreUsageLog> for UsageLogResponse {
             execution_id: log.execution_id,
             timestamp: log.timestamp.to_rfc3339(),
             cost_unit: log.cost_unit,
-            token_usage: log.token_usage,
+            token_usage: log.token_usage.map(|v| v as u64),
             metadata: log.metadata,
         }
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum BrickIdentifier {
     Type(BrickType),

@@ -2,13 +2,14 @@ use axum::{
     extract::Path,
     http::StatusCode,
     response::Json,
-    routing::{get, post, delete},
+    routing::{post, delete},
     Router,
 };
 use std::sync::Arc;
 
 use crate::dto::{ScheduleFlowRequest, ScheduleFlowResponse, ScheduledFlowsResponse};
 use crate::routes::SchedulerState;
+use flowmason_scheduler::cron_executor::FlowExecutor;
 use flowmason_core::{FlowRunner, FlowRunnerContext};
 use flowmason_bricks::*;
 
@@ -27,13 +28,11 @@ async fn schedule_flow(
         .ok_or(StatusCode::NOT_FOUND)?;
 
     // Create executor function that will be called by the scheduler
-    let flow_repo_clone = state.flow_repo.clone();
     let execution_repo_clone = state.execution_repo.clone();
     let quota_manager_clone = state.quota_manager.clone();
     let usage_logger_clone = state.usage_logger.clone();
     
-    let executor = Arc::new(move |flow: flowmason_core::types::Flow, initial_payload: serde_json::Value| {
-        let flow_repo = flow_repo_clone.clone();
+    let executor: FlowExecutor = Arc::new(move |flow: flowmason_core::types::Flow, initial_payload: serde_json::Value| {
         let execution_repo = execution_repo_clone.clone();
         let quota_manager = quota_manager_clone.clone();
         let usage_logger = usage_logger_clone.clone();

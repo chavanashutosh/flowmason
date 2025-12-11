@@ -5,7 +5,8 @@ edition.workspace = true
 
 [dependencies]
 flowmason-core = { path = "../core" }
-sqlx = { workspace = true, features = ["runtime-tokio-native-tls", "sqlite", "chrono", "uuid"] }
+flowmason-auth = { path = "../auth" }
+sqlx = { workspace = true, features = ["runtime-tokio-rustls", "sqlite", "chrono", "uuid"] }
 tokio = { workspace = true }
 anyhow = { workspace = true }
 serde = { workspace = true }

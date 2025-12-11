@@ -14,6 +14,12 @@ impl ExecutionRepository {
     }
 
     pub async fn create(&self, execution: &FlowExecution) -> Result<()> {
+        let status_json = serde_json::to_string(&execution.status)?;
+        let started_at_str = execution.started_at.to_rfc3339();
+        let completed_at_str = execution.completed_at.as_ref().map(|dt| dt.to_rfc3339());
+        let input_payload_json = serde_json::to_string(&execution.input_payload)?;
+        let output_payload_json = execution.output_payload.as_ref().map(|v| serde_json::to_string(v).unwrap_or_default());
+        
         sqlx::query!(
             r#"
             INSERT INTO executions (execution_id, flow_id, status, started_at, completed_at, input_payload, output_payload, error)
@@ -21,11 +27,11 @@ impl ExecutionRepository {
             "#,
             execution.execution_id,
             execution.flow_id,
-            serde_json::to_string(&execution.status)?,
-            execution.started_at,
-            execution.completed_at,
-            serde_json::to_string(&execution.input_payload)?,
-            execution.output_payload.as_ref().map(|v| serde_json::to_string(v).unwrap_or_default()),
+            status_json,
+            started_at_str,
+            completed_at_str,
+            input_payload_json,
+            output_payload_json,
             execution.error
         )
         .execute(&self.pool)
@@ -49,12 +55,18 @@ impl ExecutionRepository {
         if let Some(row) = row {
             Ok(Some(FlowExecution {
                 flow_id: row.flow_id,
-                execution_id: row.execution_id,
+                execution_id: row.execution_id.expect("execution_id should not be null"),
                 status: serde_json::from_str(&row.status)?,
-                started_at: row.started_at,
-                completed_at: row.completed_at,
+                started_at: chrono::DateTime::parse_from_rfc3339(&row.started_at)
+                    .map_err(|e| anyhow::anyhow!("Failed to parse started_at: {}", e))?
+                    .with_timezone(&chrono::Utc),
+                completed_at: row.completed_at.as_ref().map(|s| {
+                    chrono::DateTime::parse_from_rfc3339(s)
+                        .map_err(|e| anyhow::anyhow!("Failed to parse completed_at: {}", e))
+                        .map(|dt| dt.with_timezone(&chrono::Utc))
+                }).transpose()?,
                 input_payload: serde_json::from_str(&row.input_payload)?,
-                output_payload: row.output_payload.map(|s| serde_json::from_str(&s).unwrap_or(Value::Null)),
+                output_payload: row.output_payload.as_ref().map(|s| serde_json::from_str(s.as_str()).unwrap_or(Value::Null)),
                 error: row.error,
             }))
         } else {
@@ -79,12 +91,18 @@ impl ExecutionRepository {
         for row in rows {
             executions.push(FlowExecution {
                 flow_id: row.flow_id,
-                execution_id: row.execution_id,
+                execution_id: row.execution_id.expect("execution_id should not be null"),
                 status: serde_json::from_str(&row.status)?,
-                started_at: row.started_at,
-                completed_at: row.completed_at,
+                started_at: chrono::DateTime::parse_from_rfc3339(&row.started_at)
+                    .map_err(|e| anyhow::anyhow!("Failed to parse started_at: {}", e))?
+                    .with_timezone(&chrono::Utc),
+                completed_at: row.completed_at.as_ref().map(|s| {
+                    chrono::DateTime::parse_from_rfc3339(s)
+                        .map_err(|e| anyhow::anyhow!("Failed to parse completed_at: {}", e))
+                        .map(|dt| dt.with_timezone(&chrono::Utc))
+                }).transpose()?,
                 input_payload: serde_json::from_str(&row.input_payload)?,
-                output_payload: row.output_payload.map(|s| serde_json::from_str(&s).unwrap_or(Value::Null)),
+                output_payload: row.output_payload.as_ref().map(|s| serde_json::from_str(s.as_str()).unwrap_or(Value::Null)),
                 error: row.error,
             });
         }
@@ -107,12 +125,18 @@ impl ExecutionRepository {
         for row in rows {
             executions.push(FlowExecution {
                 flow_id: row.flow_id,
-                execution_id: row.execution_id,
+                execution_id: row.execution_id.expect("execution_id should not be null"),
                 status: serde_json::from_str(&row.status)?,
-                started_at: row.started_at,
-                completed_at: row.completed_at,
+                started_at: chrono::DateTime::parse_from_rfc3339(&row.started_at)
+                    .map_err(|e| anyhow::anyhow!("Failed to parse started_at: {}", e))?
+                    .with_timezone(&chrono::Utc),
+                completed_at: row.completed_at.as_ref().map(|s| {
+                    chrono::DateTime::parse_from_rfc3339(s)
+                        .map_err(|e| anyhow::anyhow!("Failed to parse completed_at: {}", e))
+                        .map(|dt| dt.with_timezone(&chrono::Utc))
+                }).transpose()?,
                 input_payload: serde_json::from_str(&row.input_payload)?,
-                output_payload: row.output_payload.map(|s| serde_json::from_str(&s).unwrap_or(Value::Null)),
+                output_payload: row.output_payload.as_ref().map(|s| serde_json::from_str(s.as_str()).unwrap_or(Value::Null)),
                 error: row.error,
             });
         }

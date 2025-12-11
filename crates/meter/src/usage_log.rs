@@ -7,6 +7,7 @@ use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
+use async_trait::async_trait;
 
 /// In-memory usage logger for development
 /// In production, this would use a database
@@ -39,7 +40,7 @@ impl UsageLogger {
             execution_id: execution_id.to_string(),
             timestamp: Utc::now(),
             cost_unit,
-            token_usage,
+            token_usage: token_usage.map(|v| v as i64),
             metadata,
         };
 
@@ -136,11 +137,12 @@ impl DatabaseUsageLogger {
     }
 }
 
+#[async_trait]
 impl CoreUsageLogger for DatabaseUsageLogger {
     async fn record_usage(
         &self,
         brick_name: &str,
-        brick_type: &BrickType,
+        _brick_type: &BrickType,
         flow_id: &str,
         execution_id: &str,
         cost_unit: f64,
@@ -154,7 +156,7 @@ impl CoreUsageLogger for DatabaseUsageLogger {
             execution_id: execution_id.to_string(),
             timestamp: Utc::now(),
             cost_unit,
-            token_usage,
+            token_usage: token_usage.map(|v| v as i64),
             metadata,
         };
 
@@ -166,8 +168,28 @@ impl CoreUsageLogger for DatabaseUsageLogger {
 
         Ok(log_id)
     }
+
+    async fn get_all_logs(
+        &self,
+    ) -> Result<Vec<UsageLog>, Box<dyn std::error::Error + Send + Sync>> {
+        self.repo.list_all().await.map_err(|e| {
+            let err_msg = e.to_string();
+            Box::new(std::io::Error::new(std::io::ErrorKind::Other, err_msg)) as Box<dyn std::error::Error + Send + Sync>
+        })
+    }
+
+    async fn get_daily_usage_count(
+        &self,
+        brick_type: &BrickType,
+    ) -> Result<u64, Box<dyn std::error::Error + Send + Sync>> {
+        self.repo.get_daily_usage_count(brick_type).await.map_err(|e| {
+            let err_msg = e.to_string();
+            Box::new(std::io::Error::new(std::io::ErrorKind::Other, err_msg)) as Box<dyn std::error::Error + Send + Sync>
+        })
+    }
 }
 
+#[async_trait]
 impl CoreUsageLogger for UsageLogger {
     async fn record_usage(
         &self,
@@ -185,6 +207,28 @@ impl CoreUsageLogger for UsageLogger {
                 let err_msg = e.to_string();
                 Box::new(std::io::Error::new(std::io::ErrorKind::Other, err_msg)) as Box<dyn std::error::Error + Send + Sync>
             })
+    }
+
+    async fn get_all_logs(
+        &self,
+    ) -> Result<Vec<UsageLog>, Box<dyn std::error::Error + Send + Sync>> {
+        let logs = self.logs.read().await;
+        Ok(logs.clone())
+    }
+
+    async fn get_daily_usage_count(
+        &self,
+        brick_type: &BrickType,
+    ) -> Result<u64, Box<dyn std::error::Error + Send + Sync>> {
+        let logs = self.logs.read().await;
+        let today = Utc::now().date_naive();
+        Ok(logs
+            .iter()
+            .filter(|log| {
+                log.timestamp.date_naive() == today
+                    && log.brick_name == format!("{:?}", brick_type).to_lowercase()
+            })
+            .count() as u64)
     }
 }
 

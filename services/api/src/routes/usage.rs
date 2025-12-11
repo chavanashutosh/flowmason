@@ -6,7 +6,6 @@ use axum::{
     Router,
 };
 use flowmason_core::types::BrickType;
-use std::sync::Arc;
 use std::collections::HashSet;
 
 use crate::dto::{UsageLogResponse, UsageStatsResponse};

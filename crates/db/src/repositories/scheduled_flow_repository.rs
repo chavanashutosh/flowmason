@@ -55,14 +55,14 @@ impl ScheduledFlowRepository {
 
         if let Some(row) = row {
             Ok(Some(ScheduledFlow {
-                id: row.id,
+                id: row.id.expect("id should not be null"),
                 flow_id: row.flow_id,
                 cron_expression: row.cron_expression,
                 created_at: chrono::DateTime::parse_from_rfc3339(&row.created_at)
-                    .unwrap()
+                    .map_err(|e| anyhow::anyhow!("Failed to parse created_at: {}", e))?
                     .with_timezone(&chrono::Utc),
                 updated_at: chrono::DateTime::parse_from_rfc3339(&row.updated_at)
-                    .unwrap()
+                    .map_err(|e| anyhow::anyhow!("Failed to parse updated_at: {}", e))?
                     .with_timezone(&chrono::Utc),
             }))
         } else {
@@ -82,13 +82,15 @@ impl ScheduledFlowRepository {
         .await?;
 
         Ok(rows.into_iter().map(|row| ScheduledFlow {
-            id: row.id,
+            id: row.id.expect("id should not be null"),
             flow_id: row.flow_id,
             cron_expression: row.cron_expression,
             created_at: chrono::DateTime::parse_from_rfc3339(&row.created_at)
+                .map_err(|e| anyhow::anyhow!("Failed to parse created_at: {}", e))
                 .unwrap()
                 .with_timezone(&chrono::Utc),
             updated_at: chrono::DateTime::parse_from_rfc3339(&row.updated_at)
+                .map_err(|e| anyhow::anyhow!("Failed to parse updated_at: {}", e))
                 .unwrap()
                 .with_timezone(&chrono::Utc),
         }).collect())

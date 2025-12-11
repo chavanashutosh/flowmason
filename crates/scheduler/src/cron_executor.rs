@@ -19,8 +19,8 @@ pub struct CronExecutor {
 }
 
 impl CronExecutor {
-    pub fn new() -> Result<Self> {
-        let scheduler = JobScheduler::new()?;
+    pub async fn new() -> Result<Self> {
+        let scheduler = JobScheduler::new().await?;
         Ok(Self {
             scheduler: Arc::new(RwLock::new(scheduler)),
             flow_executors: Arc::new(RwLock::new(std::collections::HashMap::new())),
@@ -30,11 +30,11 @@ impl CronExecutor {
         })
     }
 
-    pub fn with_repositories(
+    pub async fn with_repositories(
         scheduled_flow_repo: Arc<ScheduledFlowRepository>,
         flow_repo: Arc<FlowRepository>,
     ) -> Result<Self> {
-        let scheduler = JobScheduler::new()?;
+        let scheduler = JobScheduler::new().await?;
         Ok(Self {
             scheduler: Arc::new(RwLock::new(scheduler)),
             flow_executors: Arc::new(RwLock::new(std::collections::HashMap::new())),
@@ -96,17 +96,17 @@ impl CronExecutor {
                             Ok(Some(flow)) => flow,
                             Ok(None) => {
                                 eprintln!("Scheduled flow {} not found in database", flow_id);
-                                return Err(anyhow::anyhow!("Flow {} not found", flow_id));
+                                return;
                             }
                             Err(e) => {
                                 eprintln!("Error fetching flow {} from database: {}", flow_id, e);
-                                return Err(anyhow::anyhow!("Failed to fetch flow: {}", e));
+                                return;
                             }
                         }
                     }
                     None => {
                         eprintln!("Flow repository not available for scheduled flow {}", flow_id);
-                        return Err(anyhow::anyhow!("Flow repository not available"));
+                        return;
                     }
                 };
                 
@@ -116,31 +116,29 @@ impl CronExecutor {
                 match executor(flow.clone(), initial_payload).await {
                     Ok(execution) => {
                         println!("Flow {} executed successfully. Execution ID: {}", flow.id, execution.execution_id);
-                        Ok(())
                     }
                     Err(e) => {
                         eprintln!("Error executing scheduled flow {}: {}", flow.id, e);
-                        Err(anyhow::anyhow!("Flow execution failed: {}", e))
                     }
                 }
             })
         })?;
 
         // Add job to scheduler
-        self.scheduler.write().await.add(job)?;
+        self.scheduler.write().await.add(job).await?;
 
         Ok(job_id)
     }
 
     /// Starts the cron scheduler
     pub async fn start(&self) -> Result<()> {
-        self.scheduler.write().await.start()?;
+        self.scheduler.write().await.start().await?;
         Ok(())
     }
 
     /// Stops the cron scheduler
     pub async fn stop(&self) -> Result<()> {
-        self.scheduler.write().await.shutdown()?;
+        self.scheduler.write().await.shutdown().await?;
         Ok(())
     }
 
@@ -185,7 +183,7 @@ impl CronExecutor {
     where
         F: Fn(&Flow) -> FlowExecutor,
     {
-        if let (Some(ref repo), Some(ref flow_repo)) = (self.scheduled_flow_repo, self.flow_repo) {
+        if let (Some(ref repo), Some(ref flow_repo)) = (self.scheduled_flow_repo.as_ref(), self.flow_repo.as_ref()) {
             let scheduled_flows = repo.list_all().await?;
             
             for scheduled_flow in scheduled_flows {
@@ -204,11 +202,7 @@ impl CronExecutor {
     }
 }
 
-impl Default for CronExecutor {
-    fn default() -> Self {
-        Self::new().expect("Failed to create CronExecutor")
-    }
-}
+// Note: Default cannot be async, so we remove it. Use CronExecutor::new().await instead.
 
 #[cfg(test)]
 mod tests {
@@ -216,7 +210,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_cron_executor_creation() {
-        let executor = CronExecutor::new();
+        let executor = CronExecutor::new().await;
         assert!(executor.is_ok());
     }
 }
