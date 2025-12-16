@@ -17,7 +17,12 @@ impl UsageLogRepository {
     pub async fn create(&self, log: &UsageLog) -> Result<()> {
         let timestamp_str = log.timestamp.to_rfc3339();
         let token_usage_i64 = log.token_usage.map(|v| v as i64);
-        let metadata_json = log.metadata.as_ref().map(|v| serde_json::to_string(v).unwrap_or_default());
+        let metadata_json = log.metadata.as_ref()
+            .map(|v| serde_json::to_string(v))
+            .transpose()
+            .map_err(|e| anyhow::anyhow!("Failed to serialize metadata: {}", e))?;
+        
+        let metadata_str = metadata_json.as_deref();
         
         sqlx::query!(
             r#"
@@ -31,7 +36,7 @@ impl UsageLogRepository {
             timestamp_str,
             log.cost_unit,
             token_usage_i64,
-            metadata_json
+            metadata_str
         )
         .execute(&self.pool)
         .await?;
@@ -64,7 +69,7 @@ impl UsageLogRepository {
                     .with_timezone(&chrono::Utc),
                 cost_unit: row.cost_unit,
                 token_usage: row.token_usage,
-                metadata: row.metadata.as_ref().map(|s| serde_json::from_str(s.as_str()).unwrap_or(Value::Null)),
+                metadata: row.metadata.as_ref().map(|s| parse_json_with_logging(s, "metadata")),
             });
         }
 
@@ -94,7 +99,7 @@ impl UsageLogRepository {
                     .with_timezone(&chrono::Utc),
                 cost_unit: row.cost_unit,
                 token_usage: row.token_usage,
-                metadata: row.metadata.as_ref().map(|s| serde_json::from_str(s.as_str()).unwrap_or(Value::Null)),
+                metadata: row.metadata.as_ref().map(|s| parse_json_with_logging(s, "metadata")),
             });
         }
 
@@ -102,7 +107,7 @@ impl UsageLogRepository {
     }
 
     pub async fn list_by_brick_type(&self, brick_type: &BrickType) -> Result<Vec<UsageLog>> {
-        let brick_name = format!("{:?}", brick_type).to_lowercase();
+        let brick_name = brick_type.as_str().to_lowercase();
         let rows = sqlx::query!(
             r#"
             SELECT id, brick_name, flow_id, execution_id, timestamp, cost_unit, token_usage, metadata
@@ -127,7 +132,7 @@ impl UsageLogRepository {
                     .with_timezone(&chrono::Utc),
                 cost_unit: row.cost_unit,
                 token_usage: row.token_usage,
-                metadata: row.metadata.as_ref().map(|s| serde_json::from_str(s.as_str()).unwrap_or(Value::Null)),
+                metadata: row.metadata.as_ref().map(|s| parse_json_with_logging(s, "metadata")),
             });
         }
 
@@ -135,7 +140,7 @@ impl UsageLogRepository {
     }
 
     pub async fn get_daily_usage_count(&self, brick_type: &BrickType) -> Result<u64> {
-        let brick_name = format!("{:?}", brick_type).to_lowercase();
+        let brick_name = brick_type.as_str().to_lowercase();
         let today = Utc::now().date_naive();
         let today_start = today.and_hms_opt(0, 0, 0).unwrap().and_utc();
         let today_end = today.and_hms_opt(23, 59, 59).unwrap().and_utc();

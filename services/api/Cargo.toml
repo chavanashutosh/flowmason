@@ -12,7 +12,7 @@ flowmason-db = { path = "../../crates/db" }
 flowmason-auth = { path = "../../crates/auth" }
 axum = { workspace = true }
 tower = { workspace = true, features = ["timeout", "make"] }
-tower-http = { workspace = true, features = ["fs", "cors"] }
+tower-http = { workspace = true, features = ["fs", "cors", "trace"] }
 hyper = { version = "0.14", features = ["full"] }
 tower-governor = { version = "0.2", package = "tower_governor" }
 tokio = { workspace = true }
@@ -24,5 +24,13 @@ thiserror = { workspace = true }
 uuid = { workspace = true }
 chrono = { workspace = true }
 bcrypt = "0.15"
-askama = { version = "0.12", features = ["with-axum"] }
+askama = { version = "0.12" }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+regex = "1.10"
+lazy_static = "1.4"
+url = "2.5"
+
+[dev-dependencies]
+tokio-test = "0.4"
 

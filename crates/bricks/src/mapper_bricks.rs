@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use flowmason_core::{Brick, BrickError, BrickType, Mapper, MappingRule};
+use flowmason_core::{Brick, BrickError, BrickType, Mapper, MappingRule, MappingDirection, MergeStrategy, SplitStrategy};
 use serde_json::{json, Value};
 
 pub struct FieldMappingBrick;
@@ -25,14 +25,43 @@ impl Brick for FieldMappingBrick {
                         "properties": {
                             "source_path": {
                                 "type": "string",
-                                "description": "Path to source field (e.g., 'user.name')"
+                                "description": "Single source path (legacy format, e.g., 'user.name')"
                             },
                             "target_path": {
                                 "type": "string",
-                                "description": "Path to target field (e.g., 'customer_name')"
+                                "description": "Single target path (legacy format, e.g., 'customer_name')"
+                            },
+                            "source_paths": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "Multiple source paths for multi-directional mapping"
+                            },
+                            "target_paths": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "Multiple target paths for multi-directional mapping"
+                            },
+                            "direction": {
+                                "type": "string",
+                                "enum": ["forward", "backward", "bidirectional"],
+                                "default": "forward",
+                                "description": "Mapping direction"
+                            },
+                            "merge_strategy": {
+                                "type": "string",
+                                "enum": ["concat", "merge_object", "array", "first", "last"],
+                                "description": "Strategy for merging multiple sources to one target"
+                            },
+                            "split_strategy": {
+                                "type": "string",
+                                "enum": ["copy", "extract", "transform_each"],
+                                "description": "Strategy for splitting one source to multiple targets"
                             }
-                        },
-                        "required": ["source_path", "target_path"]
+                        }
                     }
                 }
             },
@@ -48,21 +77,67 @@ impl Brick for FieldMappingBrick {
 
         let mut rules = Vec::new();
         for mapping in mappings_array {
-            let source_path = mapping
-                .get("source_path")
+            // Support both legacy (single path) and new (multi-path) formats
+            let source_paths: Vec<String> = if let Some(paths) = mapping.get("source_paths").and_then(|v| v.as_array()) {
+                paths.iter()
+                    .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                    .collect()
+            } else if let Some(path) = mapping.get("source_path").and_then(|v| v.as_str()) {
+                vec![path.to_string()]
+            } else {
+                return Err(BrickError::ConfigError("Either source_path or source_paths is required".to_string()));
+            };
+
+            let target_paths: Vec<String> = if let Some(paths) = mapping.get("target_paths").and_then(|v| v.as_array()) {
+                paths.iter()
+                    .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                    .collect()
+            } else if let Some(path) = mapping.get("target_path").and_then(|v| v.as_str()) {
+                vec![path.to_string()]
+            } else {
+                return Err(BrickError::ConfigError("Either target_path or target_paths is required".to_string()));
+            };
+
+            let direction = mapping
+                .get("direction")
                 .and_then(|v| v.as_str())
-                .ok_or_else(|| BrickError::ConfigError("source_path is required".to_string()))?
-                .to_string();
-            let target_path = mapping
-                .get("target_path")
+                .map(|s| match s {
+                    "backward" => MappingDirection::Backward,
+                    "bidirectional" => MappingDirection::Bidirectional,
+                    _ => MappingDirection::Forward,
+                })
+                .unwrap_or(MappingDirection::Forward);
+
+            let merge_strategy = mapping
+                .get("merge_strategy")
                 .and_then(|v| v.as_str())
-                .ok_or_else(|| BrickError::ConfigError("target_path is required".to_string()))?
-                .to_string();
+                .map(|s| match s {
+                    "concat" => MergeStrategy::Concat,
+                    "merge_object" => MergeStrategy::MergeObject,
+                    "array" => MergeStrategy::Array,
+                    "first" => MergeStrategy::First,
+                    "last" => MergeStrategy::Last,
+                    _ => MergeStrategy::Concat,
+                });
+
+            let split_strategy = mapping
+                .get("split_strategy")
+                .and_then(|v| v.as_str())
+                .map(|s| match s {
+                    "extract" => SplitStrategy::Extract,
+                    "transform_each" => SplitStrategy::TransformEach,
+                    _ => SplitStrategy::Copy,
+                });
 
             rules.push(MappingRule {
-                source_path,
-                target_path,
+                source_path: source_paths.first().cloned().unwrap_or_default(),
+                target_path: target_paths.first().cloned().unwrap_or_default(),
+                source_paths,
+                target_paths,
+                direction,
                 transform: None,
+                merge_strategy,
+                split_strategy,
             });
         }
 

@@ -5,11 +5,23 @@ use axum::{
     response::Response,
 };
 use crate::jwt::JwtService;
+use crate::api_key::ApiKeyService;
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct AuthContext {
     pub user_id: String,
     pub email: String,
+}
+
+/// Callback function type for API key validation
+/// This allows the routes module to provide repository access without circular dependencies
+pub type ApiKeyValidator = Arc<dyn Fn(String) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<AuthContext, StatusCode>> + Send>> + Send + Sync>;
+
+/// AuthState that can be stored in request extensions for API key validation
+#[derive(Clone)]
+pub struct AuthStateForMiddleware {
+    pub validate_api_key: ApiKeyValidator,
 }
 
 pub async fn auth_middleware(
@@ -26,17 +38,44 @@ pub async fn auth_middleware(
         let token = auth_header.strip_prefix("Bearer ").unwrap();
         let jwt_service = JwtService::from_env();
         
-        let claims = jwt_service.verify_token(token)
-            .map_err(|_| StatusCode::UNAUTHORIZED)?;
-        
-        AuthContext {
-            user_id: claims.sub,
-            email: claims.email,
+        // Try JWT verification first
+        match jwt_service.verify_token(token) {
+            Ok(claims) => {
+                AuthContext {
+                    user_id: claims.sub,
+                    email: claims.email,
+                }
+            }
+            Err(_) => {
+                // JWT verification failed, try as API key
+                let auth_state = request.extensions()
+                    .get::<AuthStateForMiddleware>()
+                    .ok_or(StatusCode::UNAUTHORIZED)?;
+                
+                // Validate API key format
+                if !ApiKeyService::validate_format(token) {
+                    return Err(StatusCode::UNAUTHORIZED);
+                }
+                
+                // Use the validation function from auth_state
+                (auth_state.validate_api_key)(token.to_string()).await?
+            }
         }
     } else if auth_header.starts_with("ApiKey ") {
-        // For API keys, we'll need to look up user_id in routes that need it
-        // For now, return unauthorized - API key routes should handle this separately
-        return Err(StatusCode::UNAUTHORIZED);
+        // Support ApiKey prefix for backward compatibility
+        let api_key = auth_header.strip_prefix("ApiKey ").unwrap();
+        
+        let auth_state = request.extensions()
+            .get::<AuthStateForMiddleware>()
+            .ok_or(StatusCode::UNAUTHORIZED)?;
+        
+        // Validate API key format
+        if !ApiKeyService::validate_format(api_key) {
+            return Err(StatusCode::UNAUTHORIZED);
+        }
+        
+        // Use the validation function from auth_state
+        (auth_state.validate_api_key)(api_key.to_string()).await?
     } else {
         return Err(StatusCode::UNAUTHORIZED);
     };

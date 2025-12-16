@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use flowmason_core::{Brick, BrickError, BrickType};
 use serde_json::{json, Value};
-use reqwest::Client;
+use crate::http_client::{get_client, execute_with_default_retry};
 
 pub struct NotionBrick;
 
@@ -65,18 +65,19 @@ impl NotionBrick {
             .and_then(|v| v.as_str())
             .ok_or_else(|| BrickError::ConfigError("database_id is required".to_string()))?;
 
-        let client = Client::new();
+        let client = get_client();
         let url = format!("https://api.notion.com/v1/databases/{}/query", database_id);
         
-        let response = client
-            .post(&url)
-            .header("Authorization", format!("Bearer {}", api_key))
-            .header("Notion-Version", "2022-06-28")
-            .header("Content-Type", "application/json")
-            .json(&json!({}))
-            .send()
-            .await
-            .map_err(|e| BrickError::ExecutionError(format!("Failed to connect to Notion API: {}", e)))?;
+        let response = execute_with_default_retry(
+            client
+                .post(&url)
+                .header("Authorization", format!("Bearer {}", api_key))
+                .header("Notion-Version", "2022-06-28")
+                .header("Content-Type", "application/json")
+                .json(&json!({}))
+        )
+        .await
+        .map_err(|e| BrickError::ExecutionError(format!("Failed to connect to Notion API: {}", e)))?;
 
         if !response.status().is_success() {
             let status = response.status();
@@ -101,7 +102,7 @@ impl NotionBrick {
             .and_then(|v| v.as_str())
             .ok_or_else(|| BrickError::ConfigError("database_id is required".to_string()))?;
 
-        let client = Client::new();
+        let client = get_client();
         let url = "https://api.notion.com/v1/pages";
         
         // Build page properties from input
@@ -132,15 +133,16 @@ impl NotionBrick {
             "properties": properties
         });
 
-        let response = client
-            .post(url)
-            .header("Authorization", format!("Bearer {}", api_key))
-            .header("Notion-Version", "2022-06-28")
-            .header("Content-Type", "application/json")
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| BrickError::ExecutionError(format!("Failed to connect to Notion API: {}", e)))?;
+        let response = execute_with_default_retry(
+            client
+                .post(url)
+                .header("Authorization", format!("Bearer {}", api_key))
+                .header("Notion-Version", "2022-06-28")
+                .header("Content-Type", "application/json")
+                .json(&payload)
+        )
+        .await
+        .map_err(|e| BrickError::ExecutionError(format!("Failed to connect to Notion API: {}", e)))?;
 
         if !response.status().is_success() {
             let status = response.status();
@@ -166,7 +168,7 @@ impl NotionBrick {
             .and_then(|v| v.as_str())
             .ok_or_else(|| BrickError::ConfigError("page_id is required in input".to_string()))?;
 
-        let client = Client::new();
+        let client = get_client();
         let url = format!("https://api.notion.com/v1/pages/{}", page_id);
         
         // Extract properties from input
@@ -187,14 +189,16 @@ impl NotionBrick {
         });
 
         let response = client
-            .patch(&url)
-            .header("Authorization", format!("Bearer {}", api_key))
-            .header("Notion-Version", "2022-06-28")
-            .header("Content-Type", "application/json")
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| BrickError::ExecutionError(format!("Failed to connect to Notion API: {}", e)))?;
+        let response = execute_with_default_retry(
+            client
+                .patch(&url)
+                .header("Authorization", format!("Bearer {}", api_key))
+                .header("Notion-Version", "2022-06-28")
+                .header("Content-Type", "application/json")
+                .json(&payload)
+        )
+        .await
+        .map_err(|e| BrickError::ExecutionError(format!("Failed to connect to Notion API: {}", e)))?;
 
         if !response.status().is_success() {
             let status = response.status();

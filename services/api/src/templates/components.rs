@@ -106,6 +106,7 @@ pub fn data_table(headers: &[&str], rows: &[Vec<String>]) -> String {
     )
 }
 
+#[allow(dead_code)]
 pub fn confirm_modal(id: &str, title: &str, message: &str, confirm_text: &str, cancel_text: &str, action_url: &str) -> String {
     format!(
         r#"<div id="{}" class="hidden fixed inset-0 z-50 overflow-y-auto">
@@ -129,6 +130,7 @@ pub fn confirm_modal(id: &str, title: &str, message: &str, confirm_text: &str, c
     )
 }
 
+#[allow(dead_code)]
 pub fn flow_card(title: &str, content: &str, actions: Option<&str>) -> String {
     let actions_html = if let Some(actions) = actions {
         format!(r#"<div class="flex items-center space-x-2">{}</div>"#, actions)

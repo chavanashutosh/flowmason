@@ -3,6 +3,17 @@ use sqlx::SqlitePool;
 use flowmason_core::types::FlowExecution;
 use serde_json::Value;
 
+/// Parses JSON string with error logging on failure
+fn parse_json_with_logging(json_str: &str, field_name: &str) -> Value {
+    match serde_json::from_str(json_str) {
+        Ok(value) => value,
+        Err(e) => {
+            tracing::warn!(field = %field_name, error = %e, "Failed to parse JSON, using Null fallback");
+            Value::Null
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct ExecutionRepository {
     pool: SqlitePool,
@@ -18,7 +29,12 @@ impl ExecutionRepository {
         let started_at_str = execution.started_at.to_rfc3339();
         let completed_at_str = execution.completed_at.as_ref().map(|dt| dt.to_rfc3339());
         let input_payload_json = serde_json::to_string(&execution.input_payload)?;
-        let output_payload_json = execution.output_payload.as_ref().map(|v| serde_json::to_string(v).unwrap_or_default());
+        let output_payload_json = execution.output_payload.as_ref()
+            .map(|v| serde_json::to_string(v))
+            .transpose()
+            .map_err(|e| anyhow::anyhow!("Failed to serialize output_payload: {}", e))?;
+        
+        let output_payload_str = output_payload_json.as_deref();
         
         sqlx::query!(
             r#"
@@ -31,7 +47,7 @@ impl ExecutionRepository {
             started_at_str,
             completed_at_str,
             input_payload_json,
-            output_payload_json,
+            output_payload_str,
             execution.error
         )
         .execute(&self.pool)
@@ -66,7 +82,7 @@ impl ExecutionRepository {
                         .map(|dt| dt.with_timezone(&chrono::Utc))
                 }).transpose()?,
                 input_payload: serde_json::from_str(&row.input_payload)?,
-                output_payload: row.output_payload.as_ref().map(|s| serde_json::from_str(s.as_str()).unwrap_or(Value::Null)),
+                output_payload: row.output_payload.as_ref().map(|s| parse_json_with_logging(s, "output_payload")),
                 error: row.error,
             }))
         } else {
@@ -74,15 +90,21 @@ impl ExecutionRepository {
         }
     }
 
-    pub async fn list_by_flow(&self, flow_id: &str) -> Result<Vec<FlowExecution>> {
+    pub async fn list_by_flow(&self, flow_id: &str, limit: Option<u32>, offset: Option<u32>) -> Result<Vec<FlowExecution>> {
+        let limit_val = limit.unwrap_or(100).min(1000) as i64; // Max 1000 items
+        let offset_val = offset.unwrap_or(0) as i64;
+        
         let rows = sqlx::query!(
             r#"
             SELECT execution_id, flow_id, status, started_at, completed_at, input_payload, output_payload, error
             FROM executions
             WHERE flow_id = ?1
             ORDER BY started_at DESC
+            LIMIT ?2 OFFSET ?3
             "#,
-            flow_id
+            flow_id,
+            limit_val,
+            offset_val
         )
         .fetch_all(&self.pool)
         .await?;
@@ -102,7 +124,7 @@ impl ExecutionRepository {
                         .map(|dt| dt.with_timezone(&chrono::Utc))
                 }).transpose()?,
                 input_payload: serde_json::from_str(&row.input_payload)?,
-                output_payload: row.output_payload.as_ref().map(|s| serde_json::from_str(s.as_str()).unwrap_or(Value::Null)),
+                output_payload: row.output_payload.as_ref().map(|s| parse_json_with_logging(s, "output_payload")),
                 error: row.error,
             });
         }
@@ -110,13 +132,19 @@ impl ExecutionRepository {
         Ok(executions)
     }
 
-    pub async fn list_all(&self) -> Result<Vec<FlowExecution>> {
+    pub async fn list_all(&self, limit: Option<u32>, offset: Option<u32>) -> Result<Vec<FlowExecution>> {
+        let limit_val = limit.unwrap_or(100).min(1000) as i64; // Max 1000 items
+        let offset_val = offset.unwrap_or(0) as i64;
+        
         let rows = sqlx::query!(
             r#"
             SELECT execution_id, flow_id, status, started_at, completed_at, input_payload, output_payload, error
             FROM executions
             ORDER BY started_at DESC
-            "#
+            LIMIT ?1 OFFSET ?2
+            "#,
+            limit_val,
+            offset_val
         )
         .fetch_all(&self.pool)
         .await?;
@@ -136,7 +164,7 @@ impl ExecutionRepository {
                         .map(|dt| dt.with_timezone(&chrono::Utc))
                 }).transpose()?,
                 input_payload: serde_json::from_str(&row.input_payload)?,
-                output_payload: row.output_payload.as_ref().map(|s| serde_json::from_str(s.as_str()).unwrap_or(Value::Null)),
+                output_payload: row.output_payload.as_ref().map(|s| parse_json_with_logging(s, "output_payload")),
                 error: row.error,
             });
         }

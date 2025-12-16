@@ -1,16 +1,30 @@
-use axum::{Router, http::StatusCode, error_handling::HandleErrorLayer};
-use tower_http::cors::CorsLayer;
+use axum::{http::StatusCode, error_handling::HandleErrorLayer};
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer, key_extractor::SmartIpKeyExtractor};
 use tower::{timeout::TimeoutLayer, ServiceBuilder, BoxError};
 use std::{net::SocketAddr, time::Duration};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
-use crate::routes::create_router;
+use flowmason_api::routes::create_router;
+use flowmason_api::middleware::request_id_middleware;
 use flowmason_db::connection::create_pool;
 
 pub async fn start_server() -> anyhow::Result<()> {
+    // Initialize tracing subscriber with environment variable control
+    let env_filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new("info"));
+    
+    tracing_subscriber::registry()
+        .with(env_filter)
+        .with(tracing_subscriber::fmt::layer().json())
+        .init();
+
+    tracing::info!("Initializing FlowMason API server");
+
     // Database pool
     let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite://flowmason.db".to_string());
     let pool = create_pool(&database_url).await?;
+    tracing::info!(database_url = %database_url, "Database connection established");
 
     // Configure rate limiting: 100 requests per second per IP
     let governor_conf = GovernorConfigBuilder::default()
@@ -25,7 +39,31 @@ pub async fn start_server() -> anyhow::Result<()> {
     let governor_layer = GovernorLayer { config: governor_conf };
 
     let middleware_stack = ServiceBuilder::new()
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(|request: &axum::http::Request<_>| {
+                    let request_id = request
+                        .headers()
+                        .get("x-request-id")
+                        .and_then(|v| v.to_str().ok())
+                        .unwrap_or("unknown");
+                    tracing::info_span!(
+                        "http_request",
+                        method = %request.method(),
+                        uri = %request.uri(),
+                        request_id = %request_id
+                    )
+                })
+                .on_request(|_request: &axum::http::Request<_>, _span: &tracing::Span| {
+                    tracing::debug!("request started");
+                })
+                .on_response(|_response: &axum::http::Response<_>, latency: std::time::Duration, _span: &tracing::Span| {
+                    tracing::info!(latency_ms = latency.as_millis(), "request completed");
+                })
+        )
+        .layer(axum::middleware::from_fn(request_id_middleware))
         .layer(HandleErrorLayer::new(|err: BoxError| async move {
+            tracing::error!(error = %err, "Request error");
             if err.is::<tower::timeout::error::Elapsed>() {
                 StatusCode::REQUEST_TIMEOUT
             } else {
@@ -40,7 +78,7 @@ pub async fn start_server() -> anyhow::Result<()> {
         .layer(middleware_stack);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
-    println!("🚀 FlowMason API server starting on http://{}", addr);
+    tracing::info!(address = %addr, "🚀 FlowMason API server starting");
 
     // Configure HTTP server with increased header size limits to prevent HTTP 431 errors
     // Note: hyper 0.14 (used by Axum 0.7) doesn't expose max_header_size in its public API.

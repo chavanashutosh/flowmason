@@ -6,7 +6,7 @@ A visual automation platform that allows you to build powerful workflows by conn
 
 FlowMason is a workflow automation tool that enables you to:
 
-- **Connect Services**: Integrate with popular services like OpenAI, HubSpot, Notion, Odoo, n8n, NVIDIA, and more
+- **Connect Services**: Integrate with popular services and APIs
 - **Build Workflows**: Create automated workflows by chaining multiple operations together in a visual interface
 - **Schedule Tasks**: Run workflows on a schedule using cron expressions
 - **Track Usage**: Monitor usage and costs for each integration with built-in metering
@@ -20,9 +20,9 @@ A **flow** is a sequence of operations that execute in order. Each flow consists
 
 ### Bricks
 A **brick** is a single operation or integration. FlowMason supports:
-- **AI Services**: OpenAI (text generation), NVIDIA (ASR, OCR, text generation)
-- **CRM/Business Tools**: HubSpot (deals, contacts), Notion (pages, databases), Odoo (invoices, products)
-- **Automation**: n8n webhooks
+- **AI Services**: Text generation, ASR, OCR
+- **CRM/Business Tools**: Deals, contacts, pages, databases, invoices, products
+- **Automation**: Webhooks and automation workflows
 - **Data Processing**: Field mapping, text combination, conditional logic
 
 ### Executions
@@ -32,20 +32,20 @@ Each flow execution tracks input/output payloads, execution status (pending, run
 
 - **Backend**: Rust with Axum web framework
 - **Database**: SQLite for data persistence
-- **Frontend**: Dioxus (Rust-based web framework)
+- **Frontend**: React + Vite + TypeScript
 - **Scheduler**: Cron-based task scheduling
 - **Authentication**: JWT-based authentication with API keys
 
 ## Tags
 
-`#rust` `#automation` `#workflow` `#api-integration` `#visual-automation` `#workflow-automation` `#no-code` `#low-code` `#integration-platform` `#dioxus` `#axum` `#openai` `#hubspot` `#notion` `#odoo` `#n8n` `#nvidia` `#cron` `#scheduler` `#webhooks` `#api` `#backend` `#fullstack` `#rustlang` `#automation-tool` `#workflow-engine` `#integration-tool` `#saas` `#productivity` `#business-automation`
+`#rust` `#automation` `#workflow` `#api-integration` `#visual-automation` `#workflow-automation` `#no-code` `#low-code` `#integration-platform` `#react` `#vite` `#typescript` `#axum` `#cron` `#scheduler` `#webhooks` `#api` `#backend` `#fullstack` `#rustlang` `#automation-tool` `#workflow-engine` `#integration-tool` `#saas` `#productivity` `#business-automation`
 
 ## How to Run the Project
 
 ### Prerequisites
 
 - Rust 1.70+ ([install Rust](https://rustup.rs/))
-- Dioxus CLI: `cargo install dioxus-cli`
+- Node.js 18+ and npm ([install Node.js](https://nodejs.org/))
 
 ### Environment Setup
 
@@ -67,28 +67,47 @@ cargo run
 
 The API server will start on **http://localhost:3000**
 
-### Build and Start the Web UI (Dioxus)
+### Build and Start the Web UI (React/Vite)
 
-The Web UI is now built with Dioxus (Rust). Build it first:
-
-```bash
-cd services/web-ui
-dx build --release
-```
-
-Or for development:
+The Web UI is now built with React and Vite. Install dependencies first:
 
 ```bash
-cd services/web-ui
-dx serve --platform web
+cd services/web-ui-vite
+npm install
 ```
 
-**Note**: Always specify `--platform web` when running Dioxus commands.
+For development:
 
-The Web UI will be available on **http://localhost:8080** (development) or served by the API server at **http://localhost:3000** (production)
+```bash
+cd services/web-ui-vite
+npm run dev
+```
+
+For production build:
+
+```bash
+cd services/web-ui-vite
+npm run build
+```
+
+The Web UI will be available on **http://localhost:8080** (development) or served by the API server at **http://localhost:3000** (production after building)
+
+### Run All Services (One Command)
+
+Run both API server and Web UI with a single command:
+
+```bash
+./run.sh
+```
+
+Or as a one-liner:
+
+```bash
+(cd services/api && cargo run) & (cd services/web-ui-vite && npm run dev) & wait
+```
 
 ### Access Points
 
 - **API Server**: http://localhost:3000
-- **Web UI (Dev)**: http://localhost:8080 (when running `dx serve`)
-- **Web UI (Prod)**: http://localhost:3000 (served by API server after building)
+- **Web UI (Dev)**: http://localhost:8080 (when running `npm run dev`)
+- **Web UI (Prod)**: http://localhost:3000 (served by API server after building with `npm run build`)

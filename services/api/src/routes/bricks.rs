@@ -25,6 +25,7 @@ async fn list_bricks() -> Json<BrickListResponse> {
     let field_mapping = FieldMappingBrick;
     let combine_text = CombineTextBrick;
     let conditional = ConditionalBrick;
+    let rules_engine = RulesEngineBrick;
     
     let bricks = vec![
         BrickSchemaResponse {
@@ -72,6 +73,11 @@ async fn list_bricks() -> Json<BrickListResponse> {
             name: "conditional".to_string(),
             config_schema: conditional.config_schema(),
         },
+        BrickSchemaResponse {
+            brick_type: BrickType::RulesEngine,
+            name: "rules_engine".to_string(),
+            config_schema: rules_engine.config_schema(),
+        },
     ];
     
     Json(BrickListResponse { bricks })
@@ -115,6 +121,10 @@ async fn get_brick_schema(
         }
         "conditional" => {
             let brick = ConditionalBrick;
+            brick.config_schema()
+        }
+        "rules_engine" => {
+            let brick = RulesEngineBrick;
             brick.config_schema()
         }
         _ => return Err(axum::http::StatusCode::NOT_FOUND),

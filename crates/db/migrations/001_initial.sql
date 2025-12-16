@@ -75,10 +75,29 @@ CREATE TABLE IF NOT EXISTS scheduled_flows (
     FOREIGN KEY (flow_id) REFERENCES flows(id)
 );
 
+-- Create execution_data table
+CREATE TABLE IF NOT EXISTS execution_data (
+    id TEXT PRIMARY KEY,
+    execution_id TEXT NOT NULL,
+    brick_index INTEGER NOT NULL,
+    brick_type TEXT NOT NULL,
+    data_type TEXT NOT NULL,
+    data_key TEXT NOT NULL,
+    data_value TEXT NOT NULL,
+    timestamp TEXT NOT NULL,
+    FOREIGN KEY (execution_id) REFERENCES executions(execution_id)
+);
+
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_executions_flow_id ON executions(flow_id);
+CREATE INDEX IF NOT EXISTS idx_executions_started_at ON executions(started_at);
 CREATE INDEX IF NOT EXISTS idx_usage_logs_flow_id ON usage_logs(flow_id);
+CREATE INDEX IF NOT EXISTS idx_usage_logs_execution_id ON usage_logs(execution_id);
 CREATE INDEX IF NOT EXISTS idx_usage_logs_timestamp ON usage_logs(timestamp);
 CREATE INDEX IF NOT EXISTS idx_api_keys_user_id ON api_keys(user_id);
 CREATE INDEX IF NOT EXISTS idx_scheduled_flows_flow_id ON scheduled_flows(flow_id);
+CREATE INDEX IF NOT EXISTS idx_execution_data_execution_id ON execution_data(execution_id);
+CREATE INDEX IF NOT EXISTS idx_execution_data_brick_index ON execution_data(execution_id, brick_index);
+CREATE INDEX IF NOT EXISTS idx_execution_data_data_type ON execution_data(data_type);
+CREATE INDEX IF NOT EXISTS idx_execution_data_execution_id_data_type ON execution_data(execution_id, data_type);
 

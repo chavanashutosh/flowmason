@@ -95,30 +95,30 @@ impl CronExecutor {
                         match repo.get(&flow_id).await {
                             Ok(Some(flow)) => flow,
                             Ok(None) => {
-                                eprintln!("Scheduled flow {} not found in database", flow_id);
+                                tracing::warn!(flow_id = %flow_id, "Scheduled flow not found in database");
                                 return;
                             }
                             Err(e) => {
-                                eprintln!("Error fetching flow {} from database: {}", flow_id, e);
+                                tracing::error!(error = %e, flow_id = %flow_id, "Error fetching flow from database");
                                 return;
                             }
                         }
                     }
                     None => {
-                        eprintln!("Flow repository not available for scheduled flow {}", flow_id);
+                        tracing::warn!(flow_id = %flow_id, "Flow repository not available for scheduled flow");
                         return;
                     }
                 };
                 
-                println!("Executing scheduled flow {} at {}", flow.id, chrono::Utc::now());
+                tracing::info!(flow_id = %flow.id, "Executing scheduled flow");
                 
                 // Actually execute the flow with the fresh definition
                 match executor(flow.clone(), initial_payload).await {
                     Ok(execution) => {
-                        println!("Flow {} executed successfully. Execution ID: {}", flow.id, execution.execution_id);
+                        tracing::info!(flow_id = %flow.id, execution_id = %execution.execution_id, "Flow executed successfully");
                     }
                     Err(e) => {
-                        eprintln!("Error executing scheduled flow {}: {}", flow.id, e);
+                        tracing::error!(error = %e, flow_id = %flow.id, "Error executing scheduled flow");
                     }
                 }
             })

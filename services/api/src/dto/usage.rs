@@ -28,8 +28,9 @@ impl From<CoreUsageLog> for UsageLogResponse {
     }
 }
 
-#[allow(dead_code)]
+// BrickIdentifier kept for potential future use in filtering/grouping usage stats
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub enum BrickIdentifier {
     Type(BrickType),
     Custom(String),

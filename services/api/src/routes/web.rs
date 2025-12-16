@@ -1,16 +1,17 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::StatusCode,
     response::{Html, Redirect},
     routing::{get, post},
     Form, Router,
 };
 use serde::Deserialize;
-use std::collections::HashMap;
+use askama::Template;
 
-use crate::dto::{CreateFlowRequest, FlowResponse, UpdateFlowRequest};
-use crate::routes::{ExecutionState, FlowState, SchedulerState};
+use crate::dto::{CreateFlowRequest, FlowResponse};
+use crate::routes::FlowState;
 use crate::templates::{BaseTemplate, components};
+use flowmason_core::types::Template;
 
 pub fn routes() -> Router<FlowState> {
     Router::new()
@@ -21,6 +22,7 @@ pub fn routes() -> Router<FlowState> {
         .route("/flows/:id/edit", get(flows_edit).post(flows_update))
         .route("/flows/:id/run", post(flows_run))
         .route("/templates", get(templates))
+        .route("/templates/:id/instantiate", post(instantiate_template))
         .route("/executions", get(executions_list))
         .route("/executions/:id", get(executions_detail))
         .route("/scheduler", get(scheduler).post(scheduler_create))
@@ -440,38 +442,75 @@ async fn flows_delete(
 }
 
 async fn flows_run(
-    State(state): State<FlowState>,
-    Path(id): Path<String>,
+    State(_state): State<FlowState>,
+    Path(_id): Path<String>,
 ) -> Result<Redirect, StatusCode> {
     // This would need ExecutionState - for now, redirect to executions
     // In a full implementation, you'd execute the flow here
     Ok(Redirect::to("/executions"))
 }
 
-async fn templates() -> Result<Html<String>, StatusCode> {
+async fn templates(
+    State(state): State<FlowState>,
+) -> Result<Html<String>, StatusCode> {
+    let templates_list = state.template_repo.list(None, true, Some(100), Some(0))
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    let template_cards: String = if templates_list.is_empty() {
+        components::empty_state(
+            "No templates available",
+            "Templates will appear here once they are created.",
+            None,
+            None,
+        )
+    } else {
+        templates_list.iter()
+            .map(|t| {
+                let category_badge = if t.is_system {
+                    format!(r#"<span class="px-2 py-1 text-xs font-semibold rounded bg-blue-100 text-blue-800">System</span>"#)
+                } else {
+                    format!(r#"<span class="px-2 py-1 text-xs font-semibold rounded bg-gray-100 text-gray-800">User</span>"#)
+                };
+                
+                let name = t.name.replace('"', "&quot;").replace('<', "&lt;").replace('>', "&gt;");
+                let desc = t.description.as_deref().unwrap_or("No description")
+                    .replace('"', "&quot;").replace('<', "&lt;").replace('>', "&gt;");
+                let category = t.category.replace('"', "&quot;").replace('<', "&lt;").replace('>', "&gt;");
+                let id = t.id.replace('"', "&quot;");
+                
+                format!(
+                    r#"<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                        <div class="flex items-start justify-between mb-2">
+                            <h3 class="text-lg font-semibold text-gray-900">{}</h3>
+                            {}
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">{}</p>
+                        <p class="text-xs text-gray-500 mb-4">Category: {}</p>
+                        <a href="/templates/{}/instantiate" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
+                            Use Template →
+                        </a>
+                    </div>"#,
+                    name, category_badge, desc, category, id
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+    };
+    
     let content = format!(
         r#"<div class="space-y-6">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">Templates</h1>
-                <p class="text-gray-600 mt-1">Choose a template to get started</p>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Templates</h1>
+                    <p class="text-gray-600 mt-1">Choose a template to get started</p>
+                </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Customer Data Processing</h3>
-                    <p class="text-sm text-gray-600 mb-4">Map customer data and process with AI</p>
-                    <a href="/flows/new" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
-                        Use Template →
-                    </a>
-                </div>
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">HubSpot Deal Creation</h3>
-                    <p class="text-sm text-gray-600 mb-4">Create deals in HubSpot from form submissions</p>
-                    <a href="/flows/new" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
-                        Use Template →
-                    </a>
-                </div>
+                {}
             </div>
-        </div>"#
+        </div>"#,
+        template_cards
     );
     
     let template = BaseTemplate {
@@ -571,19 +610,22 @@ async fn scheduler() -> Result<Html<String>, StatusCode> {
 
 #[derive(Deserialize)]
 struct SchedulerForm {
+    #[allow(dead_code)]
     flow_id: String,
+    #[allow(dead_code)]
     cron_expression: String,
 }
 
 async fn scheduler_create(
-    Form(form): Form<SchedulerForm>,
+    Form(_form): Form<SchedulerForm>,
 ) -> Result<Redirect, StatusCode> {
     // This would need SchedulerState - for now, just redirect
+    // Form fields are intentionally unused as this is a placeholder implementation
     Ok(Redirect::to("/scheduler"))
 }
 
 async fn scheduler_delete(
-    Path(flow_id): Path<String>,
+    Path(_flow_id): Path<String>,
 ) -> Result<Redirect, StatusCode> {
     // This would need SchedulerState - for now, just redirect
     Ok(Redirect::to("/scheduler"))
@@ -710,4 +752,26 @@ async fn settings() -> Result<Html<String>, StatusCode> {
     };
     
     Ok(Html(template.render().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?))
+}
+
+async fn instantiate_template(
+    State(state): State<FlowState>,
+    Path(id): Path<String>,
+) -> Result<Redirect, StatusCode> {
+    let template = state.template_repo.get(&id).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .ok_or(StatusCode::NOT_FOUND)?;
+
+    let flow_id = uuid::Uuid::new_v4().to_string();
+    let now = chrono::Utc::now();
+    
+    let mut flow = template.flow_config.clone();
+    flow.id = flow_id.clone();
+    flow.name = format!("{} (Copy)", template.name);
+    flow.description = template.description.clone();
+    flow.created_at = now;
+    flow.updated_at = now;
+    
+    state.flow_repo.create(&flow).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    Ok(Redirect::to(&format!("/flows/{}", flow_id)))
 }

@@ -1,0 +1,44 @@
+{
+  "name": "HubSpot Deal Creation",
+  "description": "Create deals in HubSpot from form submissions",
+  "flow": {
+    "name": "HubSpot Deal Creation",
+    "description": "Create deals in HubSpot from form submissions",
+    "bricks": [
+      {
+        "brick_type": "field_mapping",
+        "config": {
+          "mappings": [
+            {
+              "source_path": "form.deal_name",
+              "target_path": "properties.dealname"
+            },
+            {
+              "source_path": "form.amount",
+              "target_path": "properties.amount"
+            },
+            {
+              "source_path": "form.stage",
+              "target_path": "properties.dealstage"
+            }
+          ]
+        }
+      },
+      {
+        "brick_type": "hubspot",
+        "config": {
+          "api_key": "your-hubspot-api-key",
+          "operation": "create_deal"
+        }
+      }
+    ]
+  },
+  "use_case": "Automatically create deals in HubSpot when form submissions are received",
+  "input_example": {
+    "form": {
+      "deal_name": "Q4 Enterprise Deal",
+      "amount": "50000",
+      "stage": "qualifiedtobuy"
+    }
+  }
+}

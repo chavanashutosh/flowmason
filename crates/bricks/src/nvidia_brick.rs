@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use flowmason_core::{Brick, BrickError, BrickType};
 use serde_json::{json, Value};
+use crate::http_client::{get_client, execute_with_default_retry};
 
 pub struct NvidiaBrick;
 
@@ -83,21 +84,23 @@ impl NvidiaBrick {
             .and_then(|v| v.as_str())
             .ok_or_else(|| BrickError::InvalidInput("audio_url or audio_base64 is required".to_string()))?;
 
-        // Call NVIDIA ASR API
-        let client = reqwest::Client::new();
-        let response = client
-            .post("https://api.nvidia.com/v1/speech/asr")
-            .header("Authorization", format!("Bearer {}", api_key))
-            .header("Content-Type", "application/json")
-            .json(&json!({
-                "audio": audio_data
-            }))
-            .send()
-            .await
-            .map_err(|e| BrickError::NetworkError(format!("NVIDIA ASR API error: {}", e)))?;
+        // Call NVIDIA ASR API using shared HTTP client with retry logic
+        let client = get_client();
+        let response = execute_with_default_retry(
+            client
+                .post("https://api.nvidia.com/v1/speech/asr")
+                .header("Authorization", format!("Bearer {}", api_key))
+                .header("Content-Type", "application/json")
+                .json(&json!({
+                    "audio": audio_data
+                }))
+        )
+        .await
+        .map_err(|e| BrickError::NetworkError(format!("NVIDIA ASR API error: {}", e)))?;
 
         if !response.status().is_success() {
-            let error_text = response.text().await.unwrap_or_default();
+            let error_text = response.text().await
+                .map_err(|e| BrickError::NetworkError(format!("Failed to read error response: {}", e)))?;
             return Err(BrickError::ExecutionError(format!(
                 "NVIDIA ASR API returned error: {}",
                 error_text
@@ -124,21 +127,23 @@ impl NvidiaBrick {
             .and_then(|v| v.as_str())
             .ok_or_else(|| BrickError::InvalidInput("image_url or image_base64 is required".to_string()))?;
 
-        // Call NVIDIA OCR API
-        let client = reqwest::Client::new();
-        let response = client
-            .post("https://api.nvidia.com/v1/vision/ocr")
-            .header("Authorization", format!("Bearer {}", api_key))
-            .header("Content-Type", "application/json")
-            .json(&json!({
-                "image": image_data
-            }))
-            .send()
-            .await
-            .map_err(|e| BrickError::NetworkError(format!("NVIDIA OCR API error: {}", e)))?;
+        // Call NVIDIA OCR API using shared HTTP client
+        let client = get_client();
+        let response = execute_with_default_retry(
+            client
+                .post("https://api.nvidia.com/v1/vision/ocr")
+                .header("Authorization", format!("Bearer {}", api_key))
+                .header("Content-Type", "application/json")
+                .json(&json!({
+                    "image": image_data
+                }))
+        )
+        .await
+        .map_err(|e| BrickError::NetworkError(format!("NVIDIA OCR API error: {}", e)))?;
 
         if !response.status().is_success() {
-            let error_text = response.text().await.unwrap_or_default();
+            let error_text = response.text().await
+                .map_err(|e| BrickError::NetworkError(format!("Failed to read error response: {}", e)))?;
             return Err(BrickError::ExecutionError(format!(
                 "NVIDIA OCR API returned error: {}",
                 error_text
@@ -173,23 +178,25 @@ impl NvidiaBrick {
             .and_then(|v| v.as_str())
             .ok_or_else(|| BrickError::InvalidInput("prompt is required".to_string()))?;
 
-        // Call NVIDIA Text Generation API
-        let client = reqwest::Client::new();
-        let response = client
-            .post("https://api.nvidia.com/v1/text/generation")
-            .header("Authorization", format!("Bearer {}", api_key))
-            .header("Content-Type", "application/json")
-            .json(&json!({
-                "model": model,
-                "prompt": prompt,
-                "max_tokens": 1000
-            }))
-            .send()
-            .await
-            .map_err(|e| BrickError::NetworkError(format!("NVIDIA Text Generation API error: {}", e)))?;
+        // Call NVIDIA Text Generation API using shared HTTP client
+        let client = get_client();
+        let response = execute_with_default_retry(
+            client
+                .post("https://api.nvidia.com/v1/text/generation")
+                .header("Authorization", format!("Bearer {}", api_key))
+                .header("Content-Type", "application/json")
+                .json(&json!({
+                    "model": model,
+                    "prompt": prompt,
+                    "max_tokens": 1000
+                }))
+        )
+        .await
+        .map_err(|e| BrickError::NetworkError(format!("NVIDIA Text Generation API error: {}", e)))?;
 
         if !response.status().is_success() {
-            let error_text = response.text().await.unwrap_or_default();
+            let error_text = response.text().await
+                .map_err(|e| BrickError::NetworkError(format!("Failed to read error response: {}", e)))?;
             return Err(BrickError::ExecutionError(format!(
                 "NVIDIA Text Generation API returned error: {}",
                 error_text

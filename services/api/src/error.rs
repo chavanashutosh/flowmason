@@ -6,7 +6,6 @@ use axum::{
 use serde_json::json;
 use thiserror::Error;
 
-#[allow(dead_code)]
 #[derive(Debug, Error)]
 pub enum ApiError {
     #[error("Internal server error: {0}")]
@@ -41,7 +40,7 @@ impl IntoResponse for ApiError {
             ApiError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg),
             ApiError::Conflict(msg) => (StatusCode::CONFLICT, msg),
             ApiError::Database(e) => {
-                eprintln!("Database error: {}", e);
+                tracing::error!(error = %e, "Database error");
                 (StatusCode::INTERNAL_SERVER_ERROR, format!("Database error: {}", e))
             },
         };
@@ -57,7 +56,7 @@ impl IntoResponse for ApiError {
 
 impl From<anyhow::Error> for ApiError {
     fn from(err: anyhow::Error) -> Self {
-        eprintln!("Error: {}", err);
+        tracing::error!(error = %err, "Error converting to ApiError");
         ApiError::Internal(err.to_string())
     }
 }

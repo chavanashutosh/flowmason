@@ -23,6 +23,7 @@ fn brick_type_to_db_name(brick_type: &BrickType) -> String {
         BrickType::FieldMapping => "field_mapping",
         BrickType::CombineText => "combine_text",
         BrickType::Conditional => "conditional",
+        BrickType::RulesEngine => "rules_engine",
     }.to_string()
 }
 
@@ -57,6 +58,7 @@ async fn get_usage_stats(
         BrickType::FieldMapping,
         BrickType::CombineText,
         BrickType::Conditional,
+        BrickType::RulesEngine,
     ];
     
     // Map predefined brick types to their string representations (matching database format)
@@ -145,6 +147,7 @@ async fn get_brick_stats(
                 "field_mapping" => BrickType::FieldMapping,
                 "combine_text" => BrickType::CombineText,
                 "conditional" => BrickType::Conditional,
+                "rules_engine" => BrickType::RulesEngine,
                 _ => unreachable!(),
             };
             

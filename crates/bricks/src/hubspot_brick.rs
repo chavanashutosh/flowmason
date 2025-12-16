@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use flowmason_core::{Brick, BrickError, BrickType};
 use serde_json::{json, Value};
-use reqwest::Client;
+use crate::http_client::{get_client, execute_with_default_retry};
 
 pub struct HubSpotBrick;
 
@@ -57,16 +57,17 @@ impl Brick for HubSpotBrick {
 
 impl HubSpotBrick {
     async fn get_deals(&self, api_key: &str) -> Result<Value, BrickError> {
-        let client = Client::new();
+        let client = get_client();
         let url = "https://api.hubapi.com/crm/v3/objects/deals";
         
-        let response = client
-            .get(url)
-            .query(&[("hapikey", api_key)])
-            .header("Content-Type", "application/json")
-            .send()
-            .await
-            .map_err(|e| BrickError::ExecutionError(format!("Failed to connect to HubSpot API: {}", e)))?;
+        let response = execute_with_default_retry(
+            client
+                .get(url)
+                .query(&[("hapikey", api_key)])
+                .header("Content-Type", "application/json")
+        )
+        .await
+        .map_err(|e| BrickError::ExecutionError(format!("Failed to connect to HubSpot API: {}", e)))?;
 
         if !response.status().is_success() {
             let status = response.status();
@@ -86,7 +87,7 @@ impl HubSpotBrick {
     }
 
     async fn create_deal(&self, api_key: &str, input: Value) -> Result<Value, BrickError> {
-        let client = Client::new();
+        let client = get_client();
         let url = "https://api.hubapi.com/crm/v3/objects/deals";
         
         // Extract properties from input or use input directly as properties
@@ -100,14 +101,15 @@ impl HubSpotBrick {
             "properties": properties
         });
 
-        let response = client
-            .post(url)
-            .query(&[("hapikey", api_key)])
-            .header("Content-Type", "application/json")
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| BrickError::ExecutionError(format!("Failed to connect to HubSpot API: {}", e)))?;
+        let response = execute_with_default_retry(
+            client
+                .post(url)
+                .query(&[("hapikey", api_key)])
+                .header("Content-Type", "application/json")
+                .json(&payload)
+        )
+        .await
+        .map_err(|e| BrickError::ExecutionError(format!("Failed to connect to HubSpot API: {}", e)))?;
 
         if !response.status().is_success() {
             let status = response.status();
@@ -132,7 +134,7 @@ impl HubSpotBrick {
             .and_then(|v| v.as_str())
             .ok_or_else(|| BrickError::ConfigError("Deal ID is required in input".to_string()))?;
 
-        let client = Client::new();
+        let client = get_client();
         let url = format!("https://api.hubapi.com/crm/v3/objects/deals/{}", deal_id);
         
         // Extract properties from input
@@ -149,14 +151,15 @@ impl HubSpotBrick {
             "properties": properties
         });
 
-        let response = client
-            .patch(&url)
-            .query(&[("hapikey", api_key)])
-            .header("Content-Type", "application/json")
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| BrickError::ExecutionError(format!("Failed to connect to HubSpot API: {}", e)))?;
+        let response = execute_with_default_retry(
+            client
+                .patch(&url)
+                .query(&[("hapikey", api_key)])
+                .header("Content-Type", "application/json")
+                .json(&payload)
+        )
+        .await
+        .map_err(|e| BrickError::ExecutionError(format!("Failed to connect to HubSpot API: {}", e)))?;
 
         if !response.status().is_success() {
             let status = response.status();
@@ -176,7 +179,7 @@ impl HubSpotBrick {
     }
 
     async fn get_contacts(&self, api_key: &str) -> Result<Value, BrickError> {
-        let client = Client::new();
+        let client = get_client();
         let url = "https://api.hubapi.com/crm/v3/objects/contacts";
         
         let response = client

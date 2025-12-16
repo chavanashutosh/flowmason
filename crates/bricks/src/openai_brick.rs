@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use flowmason_core::{Brick, BrickError, BrickType};
 use serde_json::{json, Value};
+use crate::http_client::{get_client, execute_with_default_retry};
 
 pub struct OpenAiBrick;
 
@@ -75,29 +76,31 @@ impl Brick for OpenAiBrick {
         // Replace placeholders in prompt template
         let prompt = replace_placeholders(prompt_template, &input);
 
-        // Call OpenAI API
-        let client = reqwest::Client::new();
-        let response = client
-            .post("https://api.openai.com/v1/chat/completions")
-            .header("Authorization", format!("Bearer {}", api_key))
-            .header("Content-Type", "application/json")
-            .json(&json!({
-                "model": model_name,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                "temperature": temperature,
-                "max_tokens": max_tokens
-            }))
-            .send()
-            .await
-            .map_err(|e| BrickError::NetworkError(format!("OpenAI API error: {}", e)))?;
+        // Call OpenAI API using shared HTTP client with retry logic
+        let client = get_client();
+        let response = execute_with_default_retry(
+            client
+                .post("https://api.openai.com/v1/chat/completions")
+                .header("Authorization", format!("Bearer {}", api_key))
+                .header("Content-Type", "application/json")
+                .json(&json!({
+                    "model": model_name,
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    "temperature": temperature,
+                    "max_tokens": max_tokens
+                }))
+        )
+        .await
+        .map_err(|e| BrickError::NetworkError(format!("OpenAI API error: {}", e)))?;
 
         if !response.status().is_success() {
-            let error_text = response.text().await.unwrap_or_default();
+            let error_text = response.text().await
+                .map_err(|e| BrickError::NetworkError(format!("Failed to read error response: {}", e)))?;
             return Err(BrickError::ExecutionError(format!(
                 "OpenAI API returned error: {}",
                 error_text

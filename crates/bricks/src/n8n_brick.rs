@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use flowmason_core::{Brick, BrickError, BrickType};
 use serde_json::{json, Value};
+use crate::http_client::{get_client, execute_with_default_retry};
 
 pub struct N8nBrick;
 
@@ -44,7 +45,7 @@ impl Brick for N8nBrick {
             .and_then(|v| v.as_str())
             .unwrap_or("POST");
 
-        let client = reqwest::Client::new();
+        let client = get_client();
         let request = match method {
             "POST" => client.post(webhook_url),
             "GET" => client.get(webhook_url),
@@ -52,14 +53,13 @@ impl Brick for N8nBrick {
             _ => return Err(BrickError::ConfigError(format!("Unsupported method: {}", method))),
         };
 
-        let response = request
-            .json(&input)
-            .send()
+        let response = execute_with_default_retry(request.json(&input))
             .await
             .map_err(|e| BrickError::NetworkError(format!("n8n webhook error: {}", e)))?;
 
         if !response.status().is_success() {
-            let error_text = response.text().await.unwrap_or_default();
+            let error_text = response.text().await
+                .map_err(|e| BrickError::NetworkError(format!("Failed to read error response: {}", e)))?;
             return Err(BrickError::ExecutionError(format!(
                 "n8n webhook returned error: {}",
                 error_text
@@ -69,7 +69,7 @@ impl Brick for N8nBrick {
         let response_json: Value = response
             .json()
             .await
-            .unwrap_or_else(|_| json!({"status": "success", "input": input}));
+            .map_err(|e| BrickError::ExecutionError(format!("Failed to parse n8n response: {}", e)))?;
 
         Ok(response_json)
     }

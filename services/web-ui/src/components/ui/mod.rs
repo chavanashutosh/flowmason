@@ -4,7 +4,6 @@ pub mod confirm_modal;
 pub mod data_table;
 pub mod flow_card;
 pub mod onboarding_panel;
-pub mod guided_tour;
 pub mod icons;
 pub mod empty_state;
 pub mod breadcrumbs;

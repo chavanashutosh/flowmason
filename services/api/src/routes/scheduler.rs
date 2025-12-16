@@ -9,9 +9,11 @@ use std::sync::Arc;
 
 use crate::dto::{ScheduleFlowRequest, ScheduleFlowResponse, ScheduledFlowsResponse};
 use crate::routes::SchedulerState;
+use crate::validation::validate_cron_expression;
 use flowmason_scheduler::cron_executor::FlowExecutor;
 use flowmason_core::{FlowRunner, FlowRunnerContext};
 use flowmason_bricks::*;
+use flowmason_bricks::RulesEngineBrick;
 
 pub fn routes() -> Router<SchedulerState> {
     Router::new()
@@ -23,6 +25,12 @@ async fn schedule_flow(
     axum::extract::State(state): axum::extract::State<SchedulerState>,
     Json(payload): Json<ScheduleFlowRequest>,
 ) -> Result<Json<ScheduleFlowResponse>, StatusCode> {
+    // Validate cron expression
+    if let Err(e) = validate_cron_expression(&payload.cron_expression) {
+        tracing::warn!(cron_expression = %payload.cron_expression, error = %e, "Invalid cron expression");
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
     // Get flow from repository
     let flow = state.flow_repo.get(&payload.flow_id).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .ok_or(StatusCode::NOT_FOUND)?;
@@ -51,15 +59,17 @@ async fn schedule_flow(
                     flowmason_core::types::BrickType::N8n => Box::new(N8nBrick),
                     flowmason_core::types::BrickType::FieldMapping => Box::new(FieldMappingBrick),
                     flowmason_core::types::BrickType::CombineText => Box::new(CombineTextBrick),
-                    flowmason_core::types::BrickType::Conditional => Box::new(ConditionalBrick),
-                };
-                bricks.push(brick);
-            }
+                            flowmason_core::types::BrickType::Conditional => Box::new(ConditionalBrick),
+                            flowmason_core::types::BrickType::RulesEngine => Box::new(RulesEngineBrick),
+                        };
+                        bricks.push(brick);
+                    }
             
             // Create execution context
             let context = FlowRunnerContext {
                 quota_manager: Some(quota_manager),
                 usage_logger: Some(usage_logger),
+                execution_data_storage: None, // Scheduler doesn't store execution data
                 flow_id: flow.id.clone(),
                 execution_id: uuid::Uuid::new_v4().to_string(),
             };
@@ -86,7 +96,7 @@ async fn schedule_flow(
         .schedule_flow(flow.clone(), &payload.cron_expression, executor)
         .await
         .map_err(|e| {
-            eprintln!("Failed to schedule flow: {}", e);
+            tracing::error!(error = %e, flow_id = %payload.flow_id, "Failed to schedule flow");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 
@@ -126,7 +136,7 @@ async fn unschedule_flow(
         .unschedule_flow(&flow_id)
         .await
         .map_err(|e| {
-            eprintln!("Failed to unschedule flow: {}", e);
+            tracing::error!(error = %e, flow_id = %flow_id, "Failed to unschedule flow");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
 

@@ -110,6 +110,13 @@ fn ConfigField(
         None
     };
 
+    // Prepare select options if this is an enum field
+    let select_options = if let Some(ref enum_vals) = enum_options {
+        Some(render_select_options(enum_vals.as_slice()))
+    } else {
+        None
+    };
+
     rsx! {
         div {
             label { 
@@ -124,7 +131,7 @@ fn ConfigField(
             }
             
             if field_type == "string" {
-                if let Some(ref enum_vals) = enum_options {
+                if let Some(ref options) = select_options {
                     // Enum/Select field
                     select {
                         class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500",
@@ -139,13 +146,8 @@ fn ConfigField(
                                 config.set(Value::Object(obj.clone()));
                             }
                         },
-                        option { value: "", "Select..." }
-                        for enum_val in enum_vals.iter() {
-                            if let Some(val_str) = enum_val.as_str() {
-                                if !val_str.is_empty() {
-                                    option { value: "{val_str}", "{val_str}" }
-                                }
-                            }
+                        for option in options.iter() {
+                            {option.clone()}
                         }
                     }
                 } else {

@@ -9,12 +9,16 @@ use tokio::sync::RwLock;
 use uuid::Uuid;
 use async_trait::async_trait;
 
-/// In-memory usage logger for development
-/// In production, this would use a database
+/// In-memory usage logger for testing only
+/// 
+/// NOTE: This is only used in tests. Production code uses DatabaseUsageLogger.
+/// Kept here for test utilities.
+#[cfg(test)]
 pub struct UsageLogger {
     logs: Arc<RwLock<Vec<UsageLog>>>,
 }
 
+#[cfg(test)]
 impl UsageLogger {
     pub fn new() -> Self {
         Self {
@@ -50,7 +54,7 @@ impl UsageLogger {
         Ok(log_id)
     }
 
-    /// Gets usage logs for a brick type
+    /// Gets usage logs for a brick type (test-only helper)
     pub async fn get_usage_by_brick_type(
         &self,
         brick_type: &BrickType,
@@ -66,7 +70,8 @@ impl UsageLogger {
             .collect())
     }
 
-    /// Gets usage logs for a flow
+    /// Gets usage logs for a flow (test-only helper)
+    #[cfg(test)]
     pub async fn get_usage_by_flow(&self, flow_id: &str) -> Result<Vec<UsageLog>> {
         let logs = self.logs.read().await;
         Ok(logs
@@ -76,7 +81,7 @@ impl UsageLogger {
             .collect())
     }
 
-    /// Gets total usage count for a brick type today
+    /// Gets total usage count for a brick type today (test-only helper)
     pub async fn get_daily_usage_count(&self, brick_type: &BrickType) -> Result<u64> {
         let logs = self.logs.read().await;
         let today = Utc::now().date_naive();
@@ -90,13 +95,14 @@ impl UsageLogger {
             .count() as u64)
     }
 
-    /// Gets all usage logs
+    /// Gets all usage logs (test-only helper)
     pub async fn get_all_logs(&self) -> Result<Vec<UsageLog>> {
         let logs = self.logs.read().await;
         Ok(logs.clone())
     }
 }
 
+#[cfg(test)]
 impl Default for UsageLogger {
     fn default() -> Self {
         Self::new()
@@ -189,6 +195,10 @@ impl CoreUsageLogger for DatabaseUsageLogger {
     }
 }
 
+/// Implementation of CoreUsageLogger for in-memory testing
+/// 
+/// NOTE: This is test-only code. Production uses DatabaseUsageLogger.
+#[cfg(test)]
 #[async_trait]
 impl CoreUsageLogger for UsageLogger {
     async fn record_usage(

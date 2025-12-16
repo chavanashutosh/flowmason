@@ -41,7 +41,10 @@ impl JwtService {
 
     pub fn from_env() -> Self {
         let secret = std::env::var("JWT_SECRET")
-            .unwrap_or_else(|_| "your-secret-key-change-in-production".to_string());
+            .unwrap_or_else(|_| {
+                eprintln!("⚠️  WARNING: JWT_SECRET not set! Using insecure default. Set JWT_SECRET environment variable for production.");
+                "your-secret-key-change-in-production".to_string()
+            });
         Self::new(secret)
     }
 }

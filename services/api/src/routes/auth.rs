@@ -2,7 +2,7 @@ use axum::{
     extract::Path,
     http::StatusCode,
     response::Json,
-    routing::{post, delete},
+    routing::{post, delete, get},
     Router,
 };
 use serde::{Deserialize, Serialize};
@@ -51,14 +51,31 @@ pub struct ApiKeyInfo {
     pub last_used_at: Option<String>,
 }
 
+#[derive(Serialize)]
+pub struct MeResponse {
+    pub user_id: String,
+    pub email: String,
+}
+
 pub fn routes() -> Router<AuthState> {
     Router::new()
         .route("/register", post(register))
         .route("/login", post(login))
+        .route("/me", get(get_me)
+            .layer(axum::middleware::from_fn(flowmason_auth::auth_middleware)))
         .nest("/api-keys", Router::new()
             .route("/", post(create_api_key).get(list_api_keys))
             .route("/:id", delete(delete_api_key))
             .layer(axum::middleware::from_fn(flowmason_auth::auth_middleware)))
+}
+
+async fn get_me(
+    Extension(auth_context): Extension<AuthContext>,
+) -> Result<Json<MeResponse>, StatusCode> {
+    Ok(Json(MeResponse {
+        user_id: auth_context.user_id,
+        email: auth_context.email,
+    }))
 }
 
 fn hash_password(password: &str) -> Result<String, StatusCode> {

@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use flowmason_core::{Brick, BrickError, BrickType};
 use serde_json::{json, Value};
-use reqwest::Client;
+use crate::http_client::{get_client, execute_with_default_retry};
 
 pub struct OdooBrick;
 
@@ -83,7 +83,7 @@ impl Brick for OdooBrick {
 
 impl OdooBrick {
     async fn authenticate(&self, url: &str, database: &str, username: &str, password: &str) -> Result<i64, BrickError> {
-        let client = Client::new();
+        let client = get_client();
         let auth_url = format!("{}/xmlrpc/2/common", url.trim_end_matches('/'));
         
         let xml_body = format!(
@@ -100,13 +100,14 @@ impl OdooBrick {
             database, username, password
         );
 
-        let response = client
-            .post(&auth_url)
-            .header("Content-Type", "text/xml")
-            .body(xml_body)
-            .send()
-            .await
-            .map_err(|e| BrickError::ExecutionError(format!("Failed to connect to Odoo: {}", e)))?;
+        let response = execute_with_default_retry(
+            client
+                .post(&auth_url)
+                .header("Content-Type", "text/xml")
+                .body(xml_body)
+        )
+        .await
+        .map_err(|e| BrickError::ExecutionError(format!("Failed to connect to Odoo: {}", e)))?;
 
         if !response.status().is_success() {
             return Err(BrickError::ExecutionError(format!(
@@ -139,7 +140,7 @@ impl OdooBrick {
     }
 
     async fn call_method(&self, url: &str, database: &str, uid: i64, password: &str, model: &str, method: &str, args: Vec<Value>) -> Result<Value, BrickError> {
-        let client = Client::new();
+        let client = get_client();
         let object_url = format!("{}/xmlrpc/2/object", url.trim_end_matches('/'));
         
         // Convert args to XML-RPC format (simplified)
@@ -179,13 +180,14 @@ impl OdooBrick {
             database, uid, password, model, method, &args_xml
         );
 
-        let response = client
-            .post(&object_url)
-            .header("Content-Type", "text/xml")
-            .body(xml_body)
-            .send()
-            .await
-            .map_err(|e| BrickError::ExecutionError(format!("Failed to call Odoo method: {}", e)))?;
+        let response = execute_with_default_retry(
+            client
+                .post(&object_url)
+                .header("Content-Type", "text/xml")
+                .body(xml_body)
+        )
+        .await
+        .map_err(|e| BrickError::ExecutionError(format!("Failed to call Odoo method: {}", e)))?;
 
         if !response.status().is_success() {
             let status = response.status();

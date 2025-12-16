@@ -1,7 +1,6 @@
 use anyhow::Result;
 use sqlx::SqlitePool;
 use flowmason_core::types::Flow;
-use serde_json::Value;
 
 #[derive(Clone)]
 pub struct FlowRepository {
@@ -51,12 +50,12 @@ impl FlowRepository {
         .await?;
 
         if let Some(row) = row {
-            let bricks: Value = serde_json::from_str(&row.bricks)?;
+            // Parse directly to Vec<BrickConfig> to avoid redundant parsing
             Ok(Some(Flow {
                 id: row.id.expect("id should not be null"),
                 name: row.name,
                 description: row.description,
-                bricks: serde_json::from_value(bricks)?,
+                bricks: serde_json::from_str(&row.bricks)?,
                 active: row.active != 0,
                 created_at: chrono::DateTime::parse_from_rfc3339(&row.created_at)
                     .map_err(|e| anyhow::anyhow!("Failed to parse created_at: {}", e))?
@@ -70,25 +69,31 @@ impl FlowRepository {
         }
     }
 
-    pub async fn list(&self) -> Result<Vec<Flow>> {
+    pub async fn list(&self, limit: Option<u32>, offset: Option<u32>) -> Result<Vec<Flow>> {
+        let limit_val = limit.unwrap_or(100).min(1000) as i64; // Max 1000 items
+        let offset_val = offset.unwrap_or(0) as i64;
+        
         let rows = sqlx::query!(
             r#"
             SELECT id, name, description, bricks, active, created_at, updated_at
             FROM flows
             ORDER BY created_at DESC
-            "#
+            LIMIT ?1 OFFSET ?2
+            "#,
+            limit_val,
+            offset_val
         )
         .fetch_all(&self.pool)
         .await?;
 
         let mut flows = Vec::new();
         for row in rows {
-            let bricks: Value = serde_json::from_str(&row.bricks)?;
+            // Parse directly to Vec<BrickConfig> to avoid redundant parsing
             flows.push(Flow {
                 id: row.id.expect("id should not be null"),
                 name: row.name,
                 description: row.description,
-                bricks: serde_json::from_value(bricks)?,
+                bricks: serde_json::from_str(&row.bricks)?,
                 active: row.active != 0,
                 created_at: chrono::DateTime::parse_from_rfc3339(&row.created_at)
                     .map_err(|e| anyhow::anyhow!("Failed to parse created_at: {}", e))?

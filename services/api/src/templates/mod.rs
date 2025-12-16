@@ -1,4 +1,5 @@
 pub mod components;
+pub mod predefined;
 
 use askama::Template;
 
@@ -9,5 +10,3 @@ pub struct BaseTemplate {
     pub content: String,
     pub current_path: String,
 }
-
-pub use components::*;

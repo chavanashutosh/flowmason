@@ -10,7 +10,10 @@ members = [
     "services/worker",
     "services/ui_builder",
     "services/tui",
-    "services/web-ui",
+    # "services/web-ui", # Deprecated - migrated to services/web-ui-vite (React/Vite)
+]
+exclude = [
+    "services/web-ui", # Deprecated - migrated to services/web-ui-vite (React/Vite)
 ]
 resolver = "2"
 
@@ -40,6 +43,8 @@ validator = { version = "0.18", features = ["derive"] }
 ratatui = "0.26"
 crossterm = "0.28"
 mdbook = "0.4"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 
 [profile.release]
 opt-level = 3

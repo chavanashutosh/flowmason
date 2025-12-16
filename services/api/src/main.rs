@@ -1,9 +1,6 @@
 mod server;
-mod routes;
-mod dto;
-mod error;
-mod templates;
 
+use flowmason_api::routes;
 use server::start_server;
 
 #[tokio::main]
